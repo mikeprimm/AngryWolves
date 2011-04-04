@@ -30,11 +30,14 @@ public class AngryWolves extends JavaPlugin {
     public static final String CONFIG_ANGERRATE_DEFAULT = "angerrate";
     public static final int ANGERRATE_DEFAULT = 10;
     public static final String CONFIG_SPAWNMSG_DEFAULT = "spawnmsg";
+    public static final String CONFIG_ASALTMOB_DEFAULT = "asaltmob";
     
     private HashMap<String, Integer> anger_by_world = new HashMap<String,Integer>();
     private int def_anger = ANGERRATE_DEFAULT;
     private HashMap<String, String> spawnmsg_by_world = new HashMap<String, String>();
     private String def_spawnmsg = null;
+    private HashMap<String, Boolean> asaltmob_by_world = new HashMap<String, Boolean>();
+    private boolean def_asaltmob = true;
     
     /* On disable, stop doing our function */
     public void onDisable() {
@@ -50,7 +53,7 @@ public class AngryWolves extends JavaPlugin {
         pm.registerEvent(Event.Type.CREATURE_SPAWN, entityListener, Priority.Normal, this);
         
         PluginDescriptionFile pdfFile = this.getDescription();
-        System.out.println( pdfFile.getName() + " version " + pdfFile.getVersion() + " is enabled!" );
+        System.out.println( pdfFile.getName() + " version " + pdfFile.getVersion() + " is enabled" );
     }
     
     private void readConfig() {
@@ -69,8 +72,12 @@ public class AngryWolves extends JavaPlugin {
     		try {
     			fos = new PrintWriter(new FileWriter(configfile));
     			fos.println("# Configuration file for AngryWolves - anger-rate is percent of spawned wolves that are angry");
+    			fos.println("# Supports two spawn methods - either asaltmob:false, where angerrate is percentage of normal wolf spawns which spawn angry");
+    			fos.println("#   Or asaltmob:true, which angerrate is number of times in 1000 (or percentage x 10) of monster spawns, in appropriate biomes, that are replaced with angry wolves");
     			fos.println("angerrate: 5");
-    			fos.println("spawnmsg: A wolf has answered the call of the wild...");
+    			fos.println("asaltmob: true");
+    			fos.println("# Optional spawn message");
+    			fos.println("# spawnmsg: There's a bad moon on the rise...");
     			
     			fos.println("# For multi-world specific rates, fill in rate under section for each world");
     			fos.println("worlds:");
@@ -78,6 +85,7 @@ public class AngryWolves extends JavaPlugin {
     			fos.println("    angerrate: 10");
     			fos.println("  - name: transylvania");
     			fos.println("    angerrate: 90");
+    			fos.println("    asaltmob: false");
     			fos.println("    spawnmsg: Something evil has entered the world...");
     			fos.close();
     		} catch (IOException iox) {
@@ -91,7 +99,7 @@ public class AngryWolves extends JavaPlugin {
         if(def_anger < 0) def_anger = 0;
         if(def_anger > 100) def_anger = 100;
         def_spawnmsg = cfg.getString(CONFIG_SPAWNMSG_DEFAULT, null);
-        
+        def_asaltmob = cfg.getBoolean(CONFIG_ASALTMOB_DEFAULT, true);
         /* Now, process world-specific overrides */
         Object w = cfg.getProperty("worlds");
         if((w != null) && (w instanceof List)) {
@@ -109,6 +117,9 @@ public class AngryWolves extends JavaPlugin {
         		if((m != null) && (m.length() > 0)) {
         			spawnmsg_by_world.put(wname, m);
         		}
+        		Boolean b = (Boolean)world.get(CONFIG_ASALTMOB_DEFAULT);
+        		if(b != null)
+        			asaltmob_by_world.put(wname, b);
         	}
         }
     }
@@ -118,8 +129,6 @@ public class AngryWolves extends JavaPlugin {
     	Integer r = anger_by_world.get(w.getName());
     	if(r != null)
     		v = r.intValue();
-    	System.out.println("getRateByWorld(" + w.getName() + ") = " + v);
-    	
     	return v;
     }
 
@@ -127,11 +136,18 @@ public class AngryWolves extends JavaPlugin {
     	String m = spawnmsg_by_world.get(w.getName());
     	if(m == null)
     		m = def_spawnmsg;
-    	System.out.println("getSpawnMsgByWorld(" + w.getName() + ") = " + m);
     	
     	return m;
     }
 
+    public boolean getAsAltMobByWorld(World w) {
+    	boolean v = def_asaltmob;
+    	Boolean s = asaltmob_by_world.get(w.getName());
+    	if(s != null)
+    		v = s.booleanValue();
+    	return v;
+    }
+    
     public boolean isDebugging(final Player player) {
         if (debugees.containsKey(player)) {
             return debugees.get(player);
