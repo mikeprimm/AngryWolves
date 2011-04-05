@@ -11,8 +11,6 @@ import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityListener;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
-import org.bukkit.entity.Monster;
-import org.bukkit.entity.Entity;
 import java.util.Random;
 import java.util.List;
 import java.util.Map;
@@ -47,38 +45,39 @@ public class AngryWolvesEntityListener extends EntityListener {
     		return;
     	Location loc = event.getLocation();
     	boolean did_it = false;
-    	/* If only in dark on this world */
-    	if(plugin.getAsAltMobByWorld(loc.getWorld())) {
-    		CreatureType ct = event.getCreatureType();
-    		if(ct.equals(CreatureType.ZOMBIE) || ct.equals(CreatureType.CREEPER) ||
-    			ct.equals(CreatureType.SPIDER) || ct.equals(CreatureType.SKELETON)) {
-    			/* If so, percentage is relative to population of monsters (percent * 10% is chance we grab */
-    			if(rnd.nextInt(1000) < plugin.getRateByWorld(loc.getWorld())) {
-        			Block b = loc.getBlock();
-        			Biome bio = b.getBiome();
-        			/* If valid biome for wolf */
-        			if(bio.equals(Biome.FOREST) || bio.equals(Biome.TAIGA) || bio.equals(Biome.SEASONAL_FOREST)) {
-        				while((b != null) && (b.getType().equals(Material.AIR))) {
-        					b = b.getFace(BlockFace.DOWN);
-        				}
-        				/* Quit if we're not over soil */
-        				if((b == null) || (!b.getType().equals(Material.GRASS))) {
-        					return;
-        				}
+    	CreatureType ct = event.getCreatureType();
+    	/* If monster spawn */
+    	if(ct.equals(CreatureType.ZOMBIE) || ct.equals(CreatureType.CREEPER) ||
+    		ct.equals(CreatureType.SPIDER) || ct.equals(CreatureType.SKELETON)) {
+    		int rate = plugin.getMobToWolfRateByWorld(loc.getWorld());
+    		/* If so, percentage is relative to population of monsters (percent * 10% is chance we grab */
+    		if((rate > 0) && (rnd.nextInt(1000) < rate)) {
+        		Block b = loc.getBlock();
+        		Biome bio = b.getBiome();
+        		/* If valid biome for wolf */
+        		if(bio.equals(Biome.FOREST) || bio.equals(Biome.TAIGA) || bio.equals(Biome.SEASONAL_FOREST)) {
+        			while((b != null) && (b.getType().equals(Material.AIR))) {
+        				b = b.getFace(BlockFace.DOWN);
+        			}
+        			/* Quit if we're not over soil */
+        			if((b == null) || (!b.getType().equals(Material.GRASS))) {
+        				return;
+        			}
 
-    					event.setCancelled(true);
-    					DoSpawn ds = new DoSpawn();
-    					ds.loc = loc;
-    					plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, ds);
-    					did_it = true;
-    				}
+    				event.setCancelled(true);
+    				DoSpawn ds = new DoSpawn();
+    				ds.loc = loc;
+    				plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, ds);
+    				did_it = true;
     			}
     		}
     	}
-    	else {
-    		if(event.getCreatureType().equals(CreatureType.WOLF)) {
-    			if(rnd.nextInt(100) < plugin.getRateByWorld(loc.getWorld())) {				
-    				Wolf w = (Wolf)event.getEntity();
+    	else if(ct.equals(CreatureType.WOLF)) {
+    		Wolf w = (Wolf)event.getEntity();
+    		/* If not angry and no target (owner) */
+    		if((w.isAngry() == false) && (w.getTarget() == null)) {
+    			int rate = plugin.getSpawnRateByWorld(loc.getWorld());
+    			if((rate > 0) && (rnd.nextInt(100) < rate)) {
     				w.setAngry(true);
     				did_it = true;
     			}
