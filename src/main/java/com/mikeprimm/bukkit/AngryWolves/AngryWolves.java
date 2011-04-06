@@ -111,15 +111,13 @@ public class AngryWolves extends JavaPlugin {
     						int rate = getFullMoonRateByWorld(world);
     						if(rate > 0) { /* If non-zero */
     							List<LivingEntity> lst = world.getLivingEntities();
-    							int cnt = 0;
     							for(LivingEntity le : lst) {
     								if(le instanceof Wolf) {
     									Wolf wolf = (Wolf)le;
-    									/* If not angry and not tame, make angry */
-    									if((wolf.isAngry() == false) && (wolf.getTarget() == null)) {
+    									/* If not angry and not tame (as of CB617, isSitting() is actually isTame()), make angry */
+    									if((wolf.isAngry() == false) && (wolf.isSitting() == false)) {
     										if(rnd.nextInt(100) < rate) {
     											wolf.setAngry(true);
-    											cnt++;
     										}
     									}
     								}
@@ -308,6 +306,7 @@ public class AngryWolves extends JavaPlugin {
     	int dpm = days_per_moon;
     	if(pws.days_per_moon != null)
     		dpm = pws.days_per_moon.intValue();
+    	//System.out.println("getDaysPerMoonByWorld(" + w.getName() + ")=" + dpm);
     	return dpm;
     }
     
@@ -321,6 +320,7 @@ public class AngryWolves extends JavaPlugin {
     		int fmr = getFullMoonRateByWorld(w);
     		if(fmr > v) v = fmr;
     	}
+    	//System.out.println("getSpawnRateByWorld(" + w.getName() + ")=" + v);
     	return v;
     }
 
@@ -329,7 +329,7 @@ public class AngryWolves extends JavaPlugin {
     	String m = def_spawnmsg;
     	if(pws.spawnmsg != null) 
     		m = pws.spawnmsg;
-    	
+    	//System.out.println("getSpawnMsgByWorld(" + w.getName() + ")=" + m);
     	return m;
     }
 
@@ -338,6 +338,7 @@ public class AngryWolves extends JavaPlugin {
     	int v = def_angerrate_moon;
     	if(pws.angerrate_moon != null)
     		v = pws.angerrate_moon.intValue();
+    	//System.out.println("getFullMoonRateByWorld(" + w.getName() + ")=" + v);
     	return v;
     }
 
@@ -346,7 +347,7 @@ public class AngryWolves extends JavaPlugin {
     	String m = pws.fullmoonmsg;
     	if(m == null)
     		m = def_fullmoonmsg;
-    	
+    	//System.out.println("getFullMoonMsgByWorld(" + w.getName() + ")=" + m);
     	return m;
     }
 
@@ -355,6 +356,7 @@ public class AngryWolves extends JavaPlugin {
     	PerWorldState pws = getState(w.getName());
     	if(pws.mobtowolf_rate != null)
     		v = pws.mobtowolf_rate.intValue();
+    	//System.out.println("getMobToWolfRateByWorld(" + w.getName() + ")=" + v);
     	return v;
     }
     

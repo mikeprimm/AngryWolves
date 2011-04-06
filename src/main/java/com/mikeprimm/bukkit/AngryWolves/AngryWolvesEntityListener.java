@@ -74,8 +74,8 @@ public class AngryWolvesEntityListener extends EntityListener {
     	}
     	else if(ct.equals(CreatureType.WOLF)) {
     		Wolf w = (Wolf)event.getEntity();
-    		/* If not angry and no target (owner) */
-    		if((w.isAngry() == false) && (w.getTarget() == null)) {
+    		/* If not angry and not tame (in CB617, isSitting() is actually isTamed()) */
+    		if((w.isAngry() == false) && (w.isSitting() == false)) {
     			int rate = plugin.getSpawnRateByWorld(loc.getWorld());
     			if((rate > 0) && (rnd.nextInt(100) < rate)) {
     				w.setAngry(true);
