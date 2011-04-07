@@ -1,6 +1,6 @@
 
 package com.mikeprimm.bukkit.AngryWolves;
-
+import net.minecraft.server.EntityWolf;
 import java.util.HashMap;
 import org.bukkit.entity.CreatureType;
 import org.bukkit.entity.Player;
@@ -21,6 +21,7 @@ import java.io.PrintWriter;
 import java.io.IOException;
 import java.util.List;
 import java.util.Random;
+import org.bukkit.craftbukkit.entity.CraftWolf;
 
 /**
  * AngryWolves plugin - watch wolf spawns and make some of them angry by default
@@ -41,10 +42,13 @@ public class AngryWolves extends JavaPlugin {
     public static final String CONFIG_DAYSPERMOON = "days-between-fullmoons";
     public static final String CONFIG_ANGERRATE_MOON = "anger-rate-fullmoon";
     public static final String CONFIG_FULLMOONMSG = "fullmoonmsg";
+    public static final String CONFIG_WOLFINSHEEP_RATE = "wolf-in-sheep-rate";
+    public static final String CONFIG_WOLFINSHEEP_MSG = "wolf-in-sheep-msg";
     public static final int SPAWN_ANGERRATE_DEFAULT = 0;
     public static final int MOBTOWOLF_RATE_DEFAULT = 10;
     public static final int DAYSPERMOON_DEFAULT = 28;
     public static final int ANGERRATE_MOON_DEFAULT = 0;
+    public static final int WOLFINSHEEP_RATE = 0;
     
     private static class PerWorldState {
     	String spawnmsg;
@@ -56,6 +60,8 @@ public class AngryWolves extends JavaPlugin {
     	boolean moon_is_full;
     	int	daycounter;
     	long	last_time;
+    	Integer	wolfinsheep_rate;
+    	String wolfinsheep_msg;
     };
     
     private HashMap<String, PerWorldState> per_world = new HashMap<String, PerWorldState>();
@@ -67,6 +73,9 @@ public class AngryWolves extends JavaPlugin {
     private int days_per_moon = DAYSPERMOON_DEFAULT;
     private int def_angerrate_moon = ANGERRATE_MOON_DEFAULT;
     private String def_fullmoonmsg = "";
+    private int wolfinsheep_rate = WOLFINSHEEP_RATE;
+    private String wolfinsheep_msg = "Oh, no!  A wolf in sheep's clothing!";
+    
     private Random rnd = new Random(System.currentTimeMillis());
     
     private PerWorldState getState(String w) {
@@ -114,8 +123,8 @@ public class AngryWolves extends JavaPlugin {
     							for(LivingEntity le : lst) {
     								if(le instanceof Wolf) {
     									Wolf wolf = (Wolf)le;
-    									/* If not angry and not tame (as of CB617, isSitting() is actually isTame()), make angry */
-    									if((wolf.isAngry() == false) && (wolf.isSitting() == false)) {
+    									/* If not angry and not tame, make angry */
+    									if((wolf.isAngry() == false) && (isTame(wolf) == false)) {
     										if(rnd.nextInt(100) < rate) {
     											wolf.setAngry(true);
     										}
@@ -168,6 +177,7 @@ public class AngryWolves extends JavaPlugin {
         // Register our events
         PluginManager pm = getServer().getPluginManager();
         pm.registerEvent(Event.Type.CREATURE_SPAWN, entityListener, Priority.Normal, this);
+        pm.registerEvent(Event.Type.ENTITY_DAMAGE, entityListener, Priority.Normal, this);
         
         PluginDescriptionFile pdfFile = this.getDescription();
         System.out.println( pdfFile.getName() + " version " + pdfFile.getVersion() + " is enabled" );
@@ -221,6 +231,9 @@ public class AngryWolves extends JavaPlugin {
     			fos.println(CONFIG_FULLMOONMSG + ": The wolves are baying at the full moon ...");
     			fos.println("# Optional spawn message");
     			fos.println("# spawnmsg: There's a bad moon on the rise...");
+    			fos.println("# Wolf-in-sheeps-clothing rate : in 10ths of a percent");
+    			fos.println(CONFIG_WOLFINSHEEP_RATE + ": 0");
+    			fos.println(CONFIG_WOLFINSHEEP_MSG + ": Oh, no! A wolf in sheep's clothing!");
     			fos.println("# For multi-world specific rates, fill in rate under section for each world");
     			fos.println("worlds:");
     			fos.println("  - name: world");
@@ -250,7 +263,8 @@ public class AngryWolves extends JavaPlugin {
         days_per_moon = cfg.getInt(CONFIG_DAYSPERMOON, DAYSPERMOON_DEFAULT);
         def_angerrate_moon = cfg.getInt(CONFIG_ANGERRATE_MOON, ANGERRATE_MOON_DEFAULT);
         def_fullmoonmsg = cfg.getString(CONFIG_FULLMOONMSG, "");
-     
+        wolfinsheep_rate = cfg.getInt(CONFIG_WOLFINSHEEP_RATE, WOLFINSHEEP_RATE);
+        wolfinsheep_msg = cfg.getString(CONFIG_WOLFINSHEEP_MSG, wolfinsheep_msg);
         /* Now, process world-specific overrides */
         List<ConfigurationNode> w = cfg.getNodeList("worlds", null);
         if(w != null) {
@@ -293,7 +307,17 @@ public class AngryWolves extends JavaPlugin {
        			m = world.getString(CONFIG_FULLMOONMSG);
        			if((m != null) && (m.length() > 0)) {
        				pws.fullmoonmsg = m;
-       			}       		
+       			}
+       			
+       			if(world.getProperty(CONFIG_WOLFINSHEEP_RATE) != null) {
+       		        pws.wolfinsheep_rate = cfg.getInt(CONFIG_WOLFINSHEEP_RATE, wolfinsheep_rate);
+       			}
+       			
+       			m = world.getString(CONFIG_WOLFINSHEEP_MSG);
+       			if((m != null) && (m.length() > 0)) {
+       				pws.wolfinsheep_msg = m;
+       			}
+
         	}
         }
         if(dirty) {	/* If updated, save it */
@@ -360,6 +384,31 @@ public class AngryWolves extends JavaPlugin {
     	return v;
     }
     
+    public int getWolfInSheepRateByWorld(World w) {
+    	PerWorldState pws = getState(w.getName());
+    	int wisr = wolfinsheep_rate;
+    	if(pws.wolfinsheep_rate != null)
+    		wisr = pws.wolfinsheep_rate.intValue();
+    	return wisr;
+    }    
+   
+    public String getWolfInSheepMsgByWorld(World w) {
+    	PerWorldState pws = getState(w.getName());
+    	String wism = wolfinsheep_msg;
+    	if(pws.wolfinsheep_msg != null)
+    		wism = pws.wolfinsheep_msg;
+    	return wism;
+    }    
+    
+    /* Wrapper for fact that we don't have proper method for this yet - fix with CB has it */
+    public boolean isTame(Wolf w) {
+    	boolean tame = false;
+    	if(w instanceof CraftWolf) {
+    		tame = ((CraftWolf)w).getHandle().y();
+    	}
+    	return tame;
+    }
+   
     public boolean isDebugging(final Player player) {
         if (debugees.containsKey(player)) {
             return debugees.get(player);

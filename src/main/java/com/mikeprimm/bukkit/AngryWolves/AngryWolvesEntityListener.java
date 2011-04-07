@@ -7,7 +7,11 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.Material;
 import org.bukkit.entity.Wolf;
+import org.bukkit.entity.Sheep;
+import org.bukkit.entity.Entity;
 import org.bukkit.event.entity.CreatureSpawnEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityListener;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -32,10 +36,13 @@ public class AngryWolvesEntityListener extends EntityListener {
 
     private static class DoSpawn implements Runnable {
     	Location loc;
+    	Player tgt;
     	public void run() {
     		Wolf w = (Wolf)loc.getWorld().spawnCreature(loc, CreatureType.WOLF);
     		if(w != null) {
     			w.setAngry(true);
+    			if(tgt != null)
+    				w.setTarget(tgt);
     		}
     	}
     }
@@ -74,8 +81,8 @@ public class AngryWolvesEntityListener extends EntityListener {
     	}
     	else if(ct.equals(CreatureType.WOLF)) {
     		Wolf w = (Wolf)event.getEntity();
-    		/* If not angry and not tame (in CB617, isSitting() is actually isTamed()) */
-    		if((w.isAngry() == false) && (w.isSitting() == false)) {
+    		/* If not angry and not tame  */
+    		if((w.isAngry() == false) && (plugin.isTame(w) == false)) {
     			int rate = plugin.getSpawnRateByWorld(loc.getWorld());
     			if((rate > 0) && (rnd.nextInt(100) < rate)) {
     				w.setAngry(true);
@@ -98,5 +105,37 @@ public class AngryWolvesEntityListener extends EntityListener {
 				}
   			}
     	}
-    }       
+    }
+    @Override
+    public void onEntityDamage(EntityDamageEvent event) {
+    	if(event.isCancelled())
+    		return;
+    	if(!(event instanceof EntityDamageByEntityEvent))
+    		return;
+    	EntityDamageByEntityEvent evt = (EntityDamageByEntityEvent)event;
+    	Entity damager = evt.getDamager();
+    	if(!(damager instanceof Player))
+    		return;
+    	Player p = (Player)damager;
+    	/* See if its a sheep */
+    	Entity e = evt.getEntity();
+    	if(!(e instanceof Sheep))
+    		return;
+    	Sheep s = (Sheep)e;
+    	Location loc = s.getLocation();
+    	int rate = plugin.getWolfInSheepRateByWorld(loc.getWorld());
+    	
+    	/* Use hashcode - random enough, and makes it so that something damaged
+		 * once will trigger, or never will, even if damaged again */
+    	if(new Random(e.hashCode()).nextInt(1000) >= rate)
+    		return;
+    	p.sendMessage(plugin.getWolfInSheepMsgByWorld(loc.getWorld()));
+    	evt.setCancelled(true);	/* Cancel event */
+    	e.remove();	/* Remove the sheep */
+    	
+    	DoSpawn ds = new DoSpawn();
+		ds.loc = loc;
+		ds.tgt = p;
+		plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, ds); 	
+    }
 }
