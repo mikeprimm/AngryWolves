@@ -1,6 +1,5 @@
 
 package com.mikeprimm.bukkit.AngryWolves;
-import net.minecraft.server.EntityWolf;
 import java.util.HashMap;
 import org.bukkit.entity.CreatureType;
 import org.bukkit.entity.Player;
@@ -76,6 +75,8 @@ public class AngryWolves extends JavaPlugin {
     private int wolfinsheep_rate = WOLFINSHEEP_RATE;
     private String wolfinsheep_msg = "Oh, no!  A wolf in sheep's clothing!";
     
+    private boolean block_spawn_anger = false;	/* Used for anger-free spawn */
+    
     private Random rnd = new Random(System.currentTimeMillis());
     
     private PerWorldState getState(String w) {
@@ -85,6 +86,10 @@ public class AngryWolves extends JavaPlugin {
     		per_world.put(w, pws);
     	}
     	return pws;
+    }
+    
+    boolean isNormalSpawn() {
+    	return block_spawn_anger;
     }
     
     private class CheckForMoon implements Runnable {
@@ -139,22 +144,14 @@ public class AngryWolves extends JavaPlugin {
 						/* And make the wolves happy */
 						int rate = getFullMoonRateByWorld(world);
 						if(rate > 0) { /* If non-zero */
-	    					int cnt = 0;
-							List<LivingEntity> lst = world.getLivingEntities();
+	   						List<LivingEntity> lst = world.getLivingEntities();
 							for(LivingEntity le : lst) {
 								if(le instanceof Wolf) {
 									Wolf wolf = (Wolf)le;
 									/* If angry, make not angry */
 									if(wolf.isAngry()) {
-										Location loc = wolf.getLocation();
-										int health = wolf.getHealth();
-										wolf.remove();	/* Remove old wolf */
-										/* Make new one at same location */
-										wolf = (Wolf)world.spawnCreature(loc, CreatureType.WOLF);
-										if(wolf != null) {
-											wolf.setHealth(health); /* Restore its health too */
-										}
-										cnt++;
+										wolf.setAngry(false);
+										wolf.setTarget(null);
 									}
 								}
 							}
@@ -416,6 +413,17 @@ public class AngryWolves extends JavaPlugin {
             return false;
         }
     }
+
+	/**
+	 * Public API - used to invoke world.spawnCreature for a wolf while preventing it from being angered
+	 */
+	public LivingEntity spawnNormalWolf(World world, Location loc) {
+		boolean last = block_spawn_anger;
+		block_spawn_anger = true;
+		LivingEntity e = world.spawnCreature(loc, CreatureType.WOLF);
+		block_spawn_anger = last;
+		return e;
+	}
 
     public void setDebugging(final Player player, final boolean value) {
         debugees.put(player, value);
