@@ -12,6 +12,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityTargetEvent;
 import org.bukkit.event.entity.EntityListener;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -114,28 +115,61 @@ public class AngryWolvesEntityListener extends EntityListener {
     		return;
     	EntityDamageByEntityEvent evt = (EntityDamageByEntityEvent)event;
     	Entity damager = evt.getDamager();
-    	if(!(damager instanceof Player))
-    		return;
-    	Player p = (Player)damager;
-    	/* See if its a sheep */
-    	Entity e = evt.getEntity();
-    	if(!(e instanceof Sheep))
-    		return;
-    	Sheep s = (Sheep)e;
-    	Location loc = s.getLocation();
-    	int rate = plugin.getWolfInSheepRateByWorld(loc.getWorld());
+    	if(damager instanceof Player) {
+    		Player p = (Player)damager;
+    		/* See if its a sheep */
+    		Entity e = evt.getEntity();
+    		if(!(e instanceof Sheep))
+    			return;
+    		Sheep s = (Sheep)e;
+    		Location loc = s.getLocation();
+    		int rate = plugin.getWolfInSheepRateByWorld(loc.getWorld());
     	
-    	/* Use hashcode - random enough, and makes it so that something damaged
-		 * once will trigger, or never will, even if damaged again */
-    	if(new Random(e.hashCode()).nextInt(1000) >= rate)
-    		return;
-    	p.sendMessage(plugin.getWolfInSheepMsgByWorld(loc.getWorld()));
-    	evt.setCancelled(true);	/* Cancel event */
-    	e.remove();	/* Remove the sheep */
+    		/* Use hashcode - random enough, and makes it so that something damaged
+    		 * once will trigger, or never will, even if damaged again */
+    		if(new Random(e.hashCode()).nextInt(1000) >= rate)
+    			return;
+    		p.sendMessage(plugin.getWolfInSheepMsgByWorld(loc.getWorld()));
+    		evt.setCancelled(true);	/* Cancel event */
+    		e.remove();	/* Remove the sheep */
     	
-    	DoSpawn ds = new DoSpawn();
-		ds.loc = loc;
-		ds.tgt = p;
-		plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, ds); 	
+    		DoSpawn ds = new DoSpawn();
+    		ds.loc = loc;
+    		ds.tgt = p;
+    		plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, ds);
+    	}
+    	else if(damager instanceof Wolf) {
+    		Entity e = event.getEntity();
+    		if(!(e instanceof Player)) {	/* Not a player - don't worry */
+    			return;
+    		}
+    		/* If we don't do wolf-friends here, skip it */
+    		if(plugin.getWolfFriendsByWorld(e.getWorld()) == false) {
+    			return;
+    		}
+    		if(AngryWolvesPermissions.permission((Player)e, AngryWolves.WOLF_FRIEND_PERM)) {
+    			event.setCancelled(true);	/* Cancel it */
+    			((Wolf)damager).setTarget(null);	/* Target someone else */
+    		}
+    	}
+    }
+    @Override
+    public void onEntityTarget(EntityTargetEvent event) {
+    	if(event.isCancelled())
+    		return;
+    	Entity e = event.getEntity();
+    	if(!(e instanceof Wolf))	/* Don't care about non-wolves */
+    		return;
+    	Entity t = event.getTarget();
+    	if(!(t instanceof Player)) 	/* Don't worry about non-player targets */
+    		return;
+    	Player p = (Player)t;
+    	/* If we don't do wolf-friends here, skip it */
+		if(plugin.getWolfFriendsByWorld(p.getWorld()) == false) {
+			return;
+		}
+    	if(AngryWolvesPermissions.permission(p, AngryWolves.WOLF_FRIEND_PERM)) {	/* If player is a wolf-friend */
+    		event.setCancelled(true);	/* Cancel it - not a valid target */
+    	}
     }
 }

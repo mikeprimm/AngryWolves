@@ -43,11 +43,14 @@ public class AngryWolves extends JavaPlugin {
     public static final String CONFIG_FULLMOONMSG = "fullmoonmsg";
     public static final String CONFIG_WOLFINSHEEP_RATE = "wolf-in-sheep-rate";
     public static final String CONFIG_WOLFINSHEEP_MSG = "wolf-in-sheep-msg";
+    public static final String CONFIG_WOLFFRIEND = "wolf-friends";
     public static final int SPAWN_ANGERRATE_DEFAULT = 0;
     public static final int MOBTOWOLF_RATE_DEFAULT = 10;
     public static final int DAYSPERMOON_DEFAULT = 28;
     public static final int ANGERRATE_MOON_DEFAULT = 0;
     public static final int WOLFINSHEEP_RATE = 0;
+    
+    public static final String WOLF_FRIEND_PERM = "angrywolves.wolf-friend";
     
     private static class PerWorldState {
     	String spawnmsg;
@@ -61,6 +64,7 @@ public class AngryWolves extends JavaPlugin {
     	long	last_time;
     	Integer	wolfinsheep_rate;
     	String wolfinsheep_msg;
+    	Boolean wolffriend;
     };
     
     private HashMap<String, PerWorldState> per_world = new HashMap<String, PerWorldState>();
@@ -74,6 +78,7 @@ public class AngryWolves extends JavaPlugin {
     private String def_fullmoonmsg = "";
     private int wolfinsheep_rate = WOLFINSHEEP_RATE;
     private String wolfinsheep_msg = "Oh, no!  A wolf in sheep's clothing!";
+    private Boolean wolffriend;
     
     private boolean block_spawn_anger = false;	/* Used for anger-free spawn */
     
@@ -168,6 +173,9 @@ public class AngryWolves extends JavaPlugin {
     }
 
     public void onEnable() {
+    	/* Initialize our permissions */
+    	AngryWolvesPermissions.initialize(getServer());
+    	
     	/* Read in our configuration */
         readConfig();
 
@@ -175,6 +183,7 @@ public class AngryWolves extends JavaPlugin {
         PluginManager pm = getServer().getPluginManager();
         pm.registerEvent(Event.Type.CREATURE_SPAWN, entityListener, Priority.Normal, this);
         pm.registerEvent(Event.Type.ENTITY_DAMAGE, entityListener, Priority.Normal, this);
+        pm.registerEvent(Event.Type.ENTITY_TARGET, entityListener, Priority.Normal, this);
         
         PluginDescriptionFile pdfFile = this.getDescription();
         System.out.println( pdfFile.getName() + " version " + pdfFile.getVersion() + " is enabled" );
@@ -231,6 +240,8 @@ public class AngryWolves extends JavaPlugin {
     			fos.println("# Wolf-in-sheeps-clothing rate : in 10ths of a percent");
     			fos.println(CONFIG_WOLFINSHEEP_RATE + ": 0");
     			fos.println(CONFIG_WOLFINSHEEP_MSG + ": Oh, no! A wolf in sheep's clothing!");
+    			fos.println("# Optional - enable 'wolf-friends' : players with the 'angrywolves.wolf-friend' privilege will not be targetted by angry wolves!");
+    			fos.println("# wolf-friends: true");
     			fos.println("# For multi-world specific rates, fill in rate under section for each world");
     			fos.println("worlds:");
     			fos.println("  - name: world");
@@ -262,6 +273,7 @@ public class AngryWolves extends JavaPlugin {
         def_fullmoonmsg = cfg.getString(CONFIG_FULLMOONMSG, "");
         wolfinsheep_rate = cfg.getInt(CONFIG_WOLFINSHEEP_RATE, WOLFINSHEEP_RATE);
         wolfinsheep_msg = cfg.getString(CONFIG_WOLFINSHEEP_MSG, wolfinsheep_msg);
+        wolffriend = cfg.getBoolean(CONFIG_WOLFFRIEND, false);
         /* Now, process world-specific overrides */
         List<ConfigurationNode> w = cfg.getNodeList("worlds", null);
         if(w != null) {
@@ -315,6 +327,9 @@ public class AngryWolves extends JavaPlugin {
        				pws.wolfinsheep_msg = m;
        			}
 
+       			if(world.getProperty(CONFIG_WOLFFRIEND) != null) {
+       				pws.wolffriend = cfg.getBoolean(CONFIG_WOLFFRIEND, wolffriend);
+       			}
         	}
         }
         if(dirty) {	/* If updated, save it */
@@ -397,6 +412,14 @@ public class AngryWolves extends JavaPlugin {
     	return wism;
     }    
     
+    public boolean getWolfFriendsByWorld(World w) {
+    	PerWorldState pws = getState(w.getName());
+    	boolean wf = wolffriend;
+    	if(pws.wolffriend != null)
+    		wf = pws.wolffriend;
+    	return wf;
+    }    
+
     /* Wrapper for fact that we don't have proper method for this yet - fix with CB has it */
     public boolean isTame(Wolf w) {
     	boolean tame = false;

@@ -6,5 +6,7 @@
 	<classpathentry kind="con" path="org.maven.ide.eclipse.MAVEN2_CLASSPATH_CONTAINER"/>
 	<classpathentry kind="lib" path="bukkit-0.0.1-SNAPSHOT.jar"/>
 	<classpathentry kind="lib" path="craftbukkit-0.0.1-SNAPSHOT.jar"/>
+	<classpathentry kind="lib" path="Permissions-2.5.4.jar"/>
+	<classpathentry kind="lib" path="GroupManager-1.0-alpha-5.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>
