@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.mikeprimm.bukkit</groupId>
   <artifactId>AngryWolves</artifactId>
-  <version>0.4</version>
+  <version>0.5</version>
   <name>AngryWolves</name>
   <url></url>
   <build>
@@ -19,5 +19,33 @@
       </plugins>
   </build>
   <dependencies>
+    <dependency>
+      <groupId>org.bukkit</groupId>
+      <artifactId>bukkit</artifactId>
+      <version>0.0.1-SNAPSHOT</version>
+      <type>jar</type>
+      <scope>compile</scope>
+    </dependency>
+        <dependency>
+      <groupId>org.bukkit</groupId>
+      <artifactId>craftbukkit</artifactId>
+      <version>0.0.1-SNAPSHOT</version>
+      <type>jar</type>
+      <scope>compile</scope>
+    </dependency>
+        <dependency>
+        	<groupId>org.anjocaido</groupId>
+        	<artifactId>GroupManager</artifactId>
+        	<version>1.0-alpha-SNAPSHOT</version>
+        	<type>jar</type>
+        	<scope>compile</scope>
+        </dependency>
+        <dependency>
+        	<groupId>com.nijikokun.bukkit</groupId>
+        	<artifactId>Permissions</artifactId>
+        	<version>2.6</version>
+     	    <type>jar</type>
+        	<scope>compile</scope>
+        </dependency>
   </dependencies>
 </project>

@@ -1,6 +1,7 @@
 
 package com.mikeprimm.bukkit.AngryWolves;
 import java.util.HashMap;
+import java.util.logging.Logger;
 import org.bukkit.entity.CreatureType;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Wolf;
@@ -28,6 +29,7 @@ import org.bukkit.craftbukkit.entity.CraftWolf;
  * @author MikePrimm
  */
 public class AngryWolves extends JavaPlugin {
+	public static Logger log = Logger.getLogger("Minecraft");
     private final AngryWolvesEntityListener entityListener = new AngryWolvesEntityListener(this);
     private final HashMap<Player, Boolean> debugees = new HashMap<Player, Boolean>();
 
@@ -186,7 +188,7 @@ public class AngryWolves extends JavaPlugin {
         pm.registerEvent(Event.Type.ENTITY_TARGET, entityListener, Priority.Normal, this);
         
         PluginDescriptionFile pdfFile = this.getDescription();
-        System.out.println( pdfFile.getName() + " version " + pdfFile.getVersion() + " is enabled" );
+        log.info( pdfFile.getName() + " version " + pdfFile.getVersion() + " is enabled" );
         /* Start job to watch for sunset/sunrise (every 30 seconds or so) */
         getServer().getScheduler().scheduleSyncRepeatingTask(this, new CheckForMoon(), 0, 20*30);
     }
