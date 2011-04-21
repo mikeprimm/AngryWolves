@@ -54,10 +54,14 @@ public class AngryWolvesEntityListener extends EntityListener {
     	Location loc = event.getLocation();
     	boolean did_it = false;
     	CreatureType ct = event.getCreatureType();
+    	AngryWolves.BaseConfig cfg = null;
     	/* If monster spawn */
     	if(ct.equals(CreatureType.ZOMBIE) || ct.equals(CreatureType.CREEPER) ||
     		ct.equals(CreatureType.SPIDER) || ct.equals(CreatureType.SKELETON)) {
-    		int rate = plugin.getMobToWolfRateByWorld(loc.getWorld());
+    		/* Find configuration for our location */
+    		cfg = plugin.findByLocation(loc);
+    		System.out.println("mob: " + cfg);
+    		int rate = cfg.getMobToWolfRate();
     		/* If so, percentage is relative to population of monsters (percent * 10% is chance we grab */
     		if((rate > 0) && (rnd.nextInt(1000) < rate)) {
         		Block b = loc.getBlock();
@@ -84,7 +88,9 @@ public class AngryWolvesEntityListener extends EntityListener {
     		Wolf w = (Wolf)event.getEntity();
     		/* If not angry and not tame  */
     		if((w.isAngry() == false) && (plugin.isTame(w) == false) && (!plugin.isNormalSpawn())) {
-    			int rate = plugin.getSpawnRateByWorld(loc.getWorld());
+        		cfg = plugin.findByLocation(loc);
+        		System.out.println("wolf: " + cfg);
+    			int rate = cfg.getSpawnAngerRate();
     			if((rate > 0) && (rnd.nextInt(100) < rate)) {
     				w.setAngry(true);
     				did_it = true;
@@ -93,7 +99,7 @@ public class AngryWolvesEntityListener extends EntityListener {
     	}
     	if(did_it) {
     		/* And get our spawn message */
-    		String sm = plugin.getSpawnMsgByWorld(loc.getWorld());
+    		String sm = cfg.getSpawnMsg();
 			if(sm != null) {
 				/* See if too soon (avoid spamming these messages) */
 				Long last = msg_ts_by_world.get(loc.getWorld().getName());
@@ -123,13 +129,15 @@ public class AngryWolvesEntityListener extends EntityListener {
     			return;
     		Sheep s = (Sheep)e;
     		Location loc = s.getLocation();
-    		int rate = plugin.getWolfInSheepRateByWorld(loc.getWorld());
+    		AngryWolves.BaseConfig cfg = plugin.findByLocation(loc);
+    		System.out.println("sheep: " + cfg);
+    		int rate = cfg.getWolfInSheepRate();
     	
     		/* Use hashcode - random enough, and makes it so that something damaged
     		 * once will trigger, or never will, even if damaged again */
     		if(new Random(e.hashCode()).nextInt(1000) >= rate)
     			return;
-    		p.sendMessage(plugin.getWolfInSheepMsgByWorld(loc.getWorld()));
+    		p.sendMessage(cfg.getWolfInSheepMsg());
     		evt.setCancelled(true);	/* Cancel event */
     		e.remove();	/* Remove the sheep */
     	
@@ -144,7 +152,9 @@ public class AngryWolvesEntityListener extends EntityListener {
     			return;
     		}
     		/* If we don't do wolf-friends here, skip it */
-    		if(plugin.getWolfFriendsByWorld(e.getWorld()) == false) {
+    		AngryWolves.WorldConfig cfg = plugin.findByWorld(e.getWorld());
+    		System.out.println("wolffriend: " + cfg);
+    		if(cfg.getWolfFriendActive() == false) {
     			return;
     		}
     		if(AngryWolvesPermissions.permission((Player)e, AngryWolves.WOLF_FRIEND_PERM)) {
@@ -165,7 +175,8 @@ public class AngryWolvesEntityListener extends EntityListener {
     		return;
     	Player p = (Player)t;
     	/* If we don't do wolf-friends here, skip it */
-		if(plugin.getWolfFriendsByWorld(p.getWorld()) == false) {
+    	AngryWolves.WorldConfig cfg = plugin.findByWorld(p.getWorld());
+		if(cfg.getWolfFriendActive() == false) {
 			return;
 		}
     	if(AngryWolvesPermissions.permission(p, AngryWolves.WOLF_FRIEND_PERM)) {	/* If player is a wolf-friend */

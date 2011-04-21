@@ -1,6 +1,7 @@
 
 package com.mikeprimm.bukkit.AngryWolves;
 import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.logging.Logger;
 import org.bukkit.entity.CreatureType;
 import org.bukkit.entity.Player;
@@ -53,46 +54,278 @@ public class AngryWolves extends JavaPlugin {
     public static final int WOLFINSHEEP_RATE = 0;
     
     public static final String WOLF_FRIEND_PERM = "angrywolves.wolf-friend";
-    
-    private static class PerWorldState {
+
+    /* Common configuration attributes - all tiers */
+    public static abstract class BaseConfig {
     	String spawnmsg;
     	Integer mobtowolf_rate;
     	Integer angerrate;
-    	Integer days_per_moon;
     	Integer angerrate_moon;
+    	Integer	wolfinsheep_rate;
+    	String wolfinsheep_msg;
+    	
+    	abstract BaseConfig getParent();
+    	
+    	public String getSpawnMsg() {
+    		if(spawnmsg != null) {
+    			return spawnmsg;
+    		}
+    		BaseConfig p = getParent();
+    		if(p != null)
+    			return p.getSpawnMsg();
+    		else
+    			return "";
+    	}
+    	
+    	public int getMobToWolfRate() {
+    		if(mobtowolf_rate != null) {
+    			return mobtowolf_rate.intValue();
+    		}
+    		BaseConfig p = getParent();
+    		if(p != null)
+    			return p.getMobToWolfRate();
+    		else
+    			return MOBTOWOLF_RATE_DEFAULT;    		
+    	}
+    	
+    	public int getSpawnAngerRate() {
+       		if(angerrate != null) {
+    			return angerrate.intValue();
+    		}
+    		BaseConfig p = getParent();
+    		if(p != null)
+    			return p.getSpawnAngerRate();
+    		else
+    			return SPAWN_ANGERRATE_DEFAULT;    		
+    	}
+
+    	public int getSpawnAngerRateMoon() {
+       		if(angerrate_moon != null) {
+    			return angerrate_moon.intValue();
+    		}
+    		BaseConfig p = getParent();
+    		if(p != null)
+    			return p.getSpawnAngerRateMoon();
+    		else
+    			return ANGERRATE_MOON_DEFAULT;    		
+    	}
+
+    	
+    	public int getWolfInSheepRate() {
+       		if(wolfinsheep_rate != null) {
+    			return wolfinsheep_rate.intValue();
+    		}
+    		BaseConfig p = getParent();
+    		if(p != null)
+    			return p.getWolfInSheepRate();
+    		else
+    			return WOLFINSHEEP_RATE;    		
+    	}
+
+    	public String getWolfInSheepMsg() {
+    		if(wolfinsheep_msg != null) {
+    			return wolfinsheep_msg;
+    		}
+    		BaseConfig p = getParent();
+    		if(p != null)
+    			return p.getWolfInSheepMsg();
+    		else
+    			return "";
+    	}
+
+    	void loadConfiguration(ConfigurationNode n) {
+    		if(n.getProperty(CONFIG_SPAWN_ANGERRATE) != null) {
+    			int spawn_ang = n.getInt(CONFIG_SPAWN_ANGERRATE, 0);
+    			if(spawn_ang < 0) spawn_ang = 0;
+    			if(spawn_ang > 100) spawn_ang = 100;
+    			angerrate = Integer.valueOf(spawn_ang);
+    		}
+    		String m = n.getString(CONFIG_SPAWNMSG_DEFAULT);
+    		if((m != null) && (m.length() > 0)) {
+    			spawnmsg = m;
+    		}
+    		
+    		if(n.getProperty(CONFIG_MOBTOWOLF_RATE) != null) {
+    			int mobtowolf = n.getInt(CONFIG_MOBTOWOLF_RATE, 0);
+    			mobtowolf_rate = Integer.valueOf(mobtowolf);
+    		}
+    		
+    		if(n.getProperty(CONFIG_ANGERRATE_MOON) != null) {
+    			int spawn_ang = n.getInt(CONFIG_ANGERRATE_MOON, 0);
+    			if(spawn_ang < 0) spawn_ang = 0;
+    			if(spawn_ang > 100) spawn_ang = 100;
+    			angerrate_moon = Integer.valueOf(spawn_ang);
+    		}
+   			
+   			if(n.getProperty(CONFIG_WOLFINSHEEP_RATE) != null) {
+   		        wolfinsheep_rate = n.getInt(CONFIG_WOLFINSHEEP_RATE, 0);
+   			}
+   			
+   			m = n.getString(CONFIG_WOLFINSHEEP_MSG);
+   			if((m != null) && (m.length() > 0)) {
+   				wolfinsheep_msg = m;
+   			}
+    	}
+    	public String toString() {
+    		return "spawnmsg=" + this.getSpawnMsg() +
+    		    ", spawnrate=" + this.getSpawnAngerRate() + 
+    			", wolfinsheeprate=" + this.getWolfInSheepRate() +
+    			", wolfinsheepmsg=" + this.getWolfInSheepMsg() +
+    			", angerratemoon=" + this.getSpawnAngerRateMoon() +
+    			", mobtowolfrate" + this.getMobToWolfRate();
+    	}
+    };
+    
+    /* World-level configuration attributes */
+    public static class WorldConfig extends BaseConfig {
+    	/* World-specific configuration attributes */
+    	Integer days_per_moon;
     	String fullmoonmsg;
+       	Boolean wolffriend;
+       	
+       	WorldConfig par;
+       	
+       	WorldConfig(WorldConfig p) {
+       		par = p;
+       	}
+       	
+       	BaseConfig getParent() { return par; }
+       	
+       	public int getDaysPerMoon() {
+       		if(days_per_moon != null) {
+       			return days_per_moon.intValue();
+       		}
+       		if(par != null)
+       			return par.getDaysPerMoon();
+       		else
+       			return DAYSPERMOON_DEFAULT;
+       	}
+       	
+       	public String getFullMoonMsg() {
+       		if(fullmoonmsg != null)
+       			return fullmoonmsg;
+       		if(par != null)
+       			return par.getFullMoonMsg();
+       		else
+       			return "";
+       	}
+       	
+       	public boolean getWolfFriendActive() {
+       		if(wolffriend != null)
+       			return wolffriend.booleanValue();
+       		if(par != null)
+       			return par.getWolfFriendActive();
+       		else
+       			return false;
+       	}
+       	
+    	void loadConfiguration(ConfigurationNode n) {
+    		super.loadConfiguration(n);	/* Load base attributes */
+
+    		if(n.getProperty(CONFIG_DAYSPERMOON) != null) {
+    			int dpm = n.getInt(CONFIG_DAYSPERMOON, 0);
+    			days_per_moon = Integer.valueOf(dpm);
+    		}
+
+   			String m = n.getString(CONFIG_FULLMOONMSG);
+   			if((m != null) && (m.length() > 0)) {
+   				fullmoonmsg = m;
+   			}
+
+   			if(n.getProperty(CONFIG_WOLFFRIEND) != null) {
+   				wolffriend = n.getBoolean(CONFIG_WOLFFRIEND, false);
+   			}
+    	}
+    };
+    
+    /* World state records - include config and operating state */
+    private static class PerWorldState extends WorldConfig {
     	boolean moon_is_full;
     	int	daycounter;
     	long	last_time;
-    	Integer	wolfinsheep_rate;
-    	String wolfinsheep_msg;
-    	Boolean wolffriend;
+    	List<AreaConfig> areas;
+    	
+    	PerWorldState() {
+    		super(def_config);
+    	}
     };
-    
-    private HashMap<String, PerWorldState> per_world = new HashMap<String, PerWorldState>();
-    
-    private int def_angerrate = SPAWN_ANGERRATE_DEFAULT;
-    private String def_spawnmsg = null;
-    private int def_mobtowolf_rate = MOBTOWOLF_RATE_DEFAULT;
 
-    private int days_per_moon = DAYSPERMOON_DEFAULT;
-    private int def_angerrate_moon = ANGERRATE_MOON_DEFAULT;
-    private String def_fullmoonmsg = "";
-    private int wolfinsheep_rate = WOLFINSHEEP_RATE;
-    private String wolfinsheep_msg = "Oh, no!  A wolf in sheep's clothing!";
-    private Boolean wolffriend;
+    /* Area level configuration attributes */
+    public static class AreaConfig extends BaseConfig {
+    	String areaname;
+    	double x_low, x_high;
+    	double z_low, z_high;
+    	WorldConfig par;
+    	
+    	BaseConfig getParent() { return par; }
+
+    	AreaConfig(String n, WorldConfig p) {
+    		par = p;
+    		areaname = n;
+    	}
+    	
+    	void loadConfiguration(ConfigurationNode n) {
+    		super.loadConfiguration(n);	/* Load base attributes */
+
+    		/* Get coordinates */
+    		List<Double> c = n.getDoubleList("coords", null);
+    		if((c == null) || (c.size() < 4)) {
+    			System.out.println("AngryWolved: coords list bad");
+    			return;
+    		}
+    		x_low = c.get(0);
+    		x_high = c.get(1);
+    		z_low = c.get(2);
+    		z_high = c.get(3);
+    		/* Fix ordering, if needed */
+    		double tmp;
+    		if(x_low > x_high) { tmp = x_low; x_low = x_high; x_high = tmp; }
+    		if(z_low > z_high) { tmp = z_low; z_low = z_high; z_high = tmp; }
+    	}
+    };
+
+    private static HashMap<String, PerWorldState> per_world = new HashMap<String, PerWorldState>();
     
+    private static WorldConfig def_config;	/* Base world configuration */
+        
     private boolean block_spawn_anger = false;	/* Used for anger-free spawn */
     
     private Random rnd = new Random(System.currentTimeMillis());
     
-    private PerWorldState getState(String w) {
+    private static PerWorldState getState(String w) {
     	PerWorldState pws = per_world.get(w);
     	if(pws == null) {
     		pws = new PerWorldState();
     		per_world.put(w, pws);
     	}
     	return pws;
+    }
+    
+    /**
+     *  Find configuration record, by world and coordinates
+     * @param loc - location
+     * @return first matching config record
+     */
+    public BaseConfig findByLocation(Location loc) {
+    	PerWorldState pws = getState(loc.getWorld().getName());
+    	if(pws.areas != null) {	/* Any areas? */
+    		for(AreaConfig ac : pws.areas) {
+    			/* If location is within area's rectangle */
+    			if((ac.x_low <= loc.getX()) && (ac.x_high >= loc.getX()) &&
+					(ac.z_low <= loc.getZ()) && (ac.z_high >= loc.getZ())) {
+    				return ac;
+    			}
+    		}
+    	}
+    	return pws;
+    }
+    /**
+     * Find configuration record by world
+     * @param w - world
+     * @return first matching config record
+     */
+    public WorldConfig findByWorld(World w) {
+    	return getState(w.getName());
     }
     
     boolean isNormalSpawn() {
@@ -103,13 +336,13 @@ public class AngryWolves extends JavaPlugin {
     	public void run() {
     		List<World> w = getServer().getWorlds();
     		for(World world : w) {
-    			int dpm = getDaysPerMoonByWorld(world);	/* Get lunar period */
+    			PerWorldState pws = getState(world.getName());
+    			
+    			int dpm = pws.getDaysPerMoon();	/* Get lunar period */
     			if(dpm <= 0) {	/* Disabled? */
-    				getState(world.getName()).moon_is_full = false; /* Not us */
+    				pws.moon_is_full = false; /* Not us */
     			}
-    			else {
-    				PerWorldState pws = getState(world.getName());
-    				
+    			else {    				
     				long t = world.getTime();	/* Get time of day */
     				if(t < pws.last_time) {	/* Day ended? */
     					pws.daycounter++;
@@ -121,7 +354,7 @@ public class AngryWolves extends JavaPlugin {
     					if(pws.moon_is_full == false) {
     						pws.moon_is_full = true;
     						/* And handle event */
-    						String msg = getFullMoonMsgByWorld(world);
+    						String msg = pws.getFullMoonMsg();
     						if((msg != null) && (msg.length() > 0)) {
     							List<Player> pl = world.getPlayers();
     							for(Player p : pl) {
@@ -129,7 +362,7 @@ public class AngryWolves extends JavaPlugin {
     							}
     						}
     						/* And make the wolves angry */
-    						int rate = getFullMoonRateByWorld(world);
+    						int rate = pws.getSpawnAngerRateMoon();
     						if(rate > 0) { /* If non-zero */
     							List<LivingEntity> lst = world.getLivingEntities();
     							for(LivingEntity le : lst) {
@@ -149,7 +382,7 @@ public class AngryWolves extends JavaPlugin {
     				else if(pws.moon_is_full) {	/* Was full, but over now */ 
     					pws.moon_is_full = false;
 						/* And make the wolves happy */
-						int rate = getFullMoonRateByWorld(world);
+						int rate = pws.getSpawnAngerRateMoon();
 						if(rate > 0) { /* If non-zero */
 	   						List<LivingEntity> lst = world.getLivingEntities();
 							for(LivingEntity le : lst) {
@@ -254,6 +487,14 @@ public class AngryWolves extends JavaPlugin {
     			fos.println("    " + CONFIG_SPAWN_ANGERRATE + ": 90");
     			fos.println("    " + CONFIG_MOBTOWOLF_RATE + ": 100");
     			fos.println("    spawnmsg: Something evil has entered the world...");
+    			fos.println("# Optional - for special settings limited to a rectangular area on one world");
+    			fos.println("#  'coords' are integer block coordinates: xlow, xhigh, zlow, zhigh");
+    			fos.println("areas:");
+    			fos.println("  - name: Area51");
+    			fos.println("    worldname: world");
+    			fos.println("    coords: 5, 200, 40, 60");
+       			fos.println("    " + CONFIG_SPAWN_ANGERRATE + ": 100");
+    			fos.println("    " + CONFIG_MOBTOWOLF_RATE + ": 100");
     			fos.close();
     		} catch (IOException iox) {
     			System.out.println("ERROR writing default configuration for AngryWolves");
@@ -264,163 +505,51 @@ public class AngryWolves extends JavaPlugin {
     	/* Migrate old settings */
     	boolean dirty = migrateOldSettings(cfg);
 
-    	/* See if we have rates configured */
-        def_angerrate = cfg.getInt(CONFIG_SPAWN_ANGERRATE, SPAWN_ANGERRATE_DEFAULT);
-        if(def_angerrate < 0) def_angerrate = 0;
-        if(def_angerrate > 100) def_angerrate = 100;
-        def_spawnmsg = cfg.getString(CONFIG_SPAWNMSG_DEFAULT, null);
-        def_mobtowolf_rate = cfg.getInt(CONFIG_MOBTOWOLF_RATE, MOBTOWOLF_RATE_DEFAULT);
-        days_per_moon = cfg.getInt(CONFIG_DAYSPERMOON, DAYSPERMOON_DEFAULT);
-        def_angerrate_moon = cfg.getInt(CONFIG_ANGERRATE_MOON, ANGERRATE_MOON_DEFAULT);
-        def_fullmoonmsg = cfg.getString(CONFIG_FULLMOONMSG, "");
-        wolfinsheep_rate = cfg.getInt(CONFIG_WOLFINSHEEP_RATE, WOLFINSHEEP_RATE);
-        wolfinsheep_msg = cfg.getString(CONFIG_WOLFINSHEEP_MSG, wolfinsheep_msg);
-        wolffriend = cfg.getBoolean(CONFIG_WOLFFRIEND, false);
-        /* Now, process world-specific overrides */
+    	/* Load default world-level configuration */
+    	def_config = new WorldConfig(null);	/* Make base default object */
+    	def_config.loadConfiguration(cfg);
+
+    	/* Now, process world-specific overrides */
         List<ConfigurationNode> w = cfg.getNodeList("worlds", null);
         if(w != null) {
         	for(ConfigurationNode world : w) {
         		String wname = world.getString("name");	/* Get name */
         		if(wname == null)
         			continue;
+        		/* Load/initialize per world state/config */
         		PerWorldState pws = getState(wname);
+        		pws.par = def_config;	/* Our parent is global default */
         		/* Migrate old settings, if needed */
         		dirty = migrateOldSettings(world) || dirty;
         		/* Now load settings */
-        		if(world.getProperty(CONFIG_SPAWN_ANGERRATE) != null) {
-        			int spawn_ang = world.getInt(CONFIG_SPAWN_ANGERRATE, def_angerrate);
-        			if(spawn_ang < 0) spawn_ang = 0;
-        			if(spawn_ang > 100) spawn_ang = 100;
-        			pws.angerrate = Integer.valueOf(spawn_ang);
-        		}
-        		String m = world.getString(CONFIG_SPAWNMSG_DEFAULT);
-        		if((m != null) && (m.length() > 0)) {
-        			pws.spawnmsg = m;
-        		}
-        		
-        		if(world.getProperty(CONFIG_MOBTOWOLF_RATE) != null) {
-        			int mobtowolf = world.getInt(CONFIG_MOBTOWOLF_RATE, def_mobtowolf_rate);
-        			pws.mobtowolf_rate = Integer.valueOf(mobtowolf);
-        		}
-        		
-        		if(world.getProperty(CONFIG_DAYSPERMOON) != null) {
-        			int dpm = world.getInt(CONFIG_DAYSPERMOON, days_per_moon);
-        			pws.days_per_moon = Integer.valueOf(dpm);
-        		}
-        		
-        		if(world.getProperty(CONFIG_ANGERRATE_MOON) != null) {
-        			int spawn_ang = world.getInt(CONFIG_ANGERRATE_MOON, def_angerrate_moon);
-        			if(spawn_ang < 0) spawn_ang = 0;
-        			if(spawn_ang > 100) spawn_ang = 100;
-        			pws.angerrate_moon = Integer.valueOf(spawn_ang);
-        		}
-
-       			m = world.getString(CONFIG_FULLMOONMSG);
-       			if((m != null) && (m.length() > 0)) {
-       				pws.fullmoonmsg = m;
-       			}
-       			
-       			if(world.getProperty(CONFIG_WOLFINSHEEP_RATE) != null) {
-       		        pws.wolfinsheep_rate = cfg.getInt(CONFIG_WOLFINSHEEP_RATE, wolfinsheep_rate);
-       			}
-       			
-       			m = world.getString(CONFIG_WOLFINSHEEP_MSG);
-       			if((m != null) && (m.length() > 0)) {
-       				pws.wolfinsheep_msg = m;
-       			}
-
-       			if(world.getProperty(CONFIG_WOLFFRIEND) != null) {
-       				pws.wolffriend = cfg.getBoolean(CONFIG_WOLFFRIEND, wolffriend);
-       			}
+        		pws.loadConfiguration(world);
         	}
         }
+        /* Now, process area-specific overrides */
+        w = cfg.getNodeList("areas", null);
+        if(w != null) {
+        	for(ConfigurationNode area : w) {
+        		String aname = area.getString("name");	/* Get name */
+        		if(aname == null)
+        			continue;
+        		String wname = area.getString("worldname");	/* Get world name */
+        		if(wname == null)
+        			continue;
+        		PerWorldState pws = getState(wname);		/* Look up world state */
+        		/* Now, make our area state */
+        		AreaConfig ac = new AreaConfig(aname, pws);
+
+        		if(pws.areas == null) pws.areas = new ArrayList<AreaConfig>();
+        		pws.areas.add(ac);	/* Add us to our world */
+        		/* Now load settings */
+        		ac.loadConfiguration(area);
+        	}
+        }
+
         if(dirty) {	/* If updated, save it */
         	cfg.save();
         }
     }
-    
-    public int getDaysPerMoonByWorld(World w) {
-    	PerWorldState pws = getState(w.getName());
-    	int dpm = days_per_moon;
-    	if(pws.days_per_moon != null)
-    		dpm = pws.days_per_moon.intValue();
-    	//System.out.println("getDaysPerMoonByWorld(" + w.getName() + ")=" + dpm);
-    	return dpm;
-    }
-    
-    public int getSpawnRateByWorld(World w) {
-    	int v = def_angerrate;    	
-    	PerWorldState pws = getState(w.getName());
-    	if(pws.angerrate != null)
-    		v = pws.angerrate.intValue();
-    	/* If full moon, increase rate if appropriate */
-    	if(pws.moon_is_full) {
-    		int fmr = getFullMoonRateByWorld(w);
-    		if(fmr > v) v = fmr;
-    	}
-    	//System.out.println("getSpawnRateByWorld(" + w.getName() + ")=" + v);
-    	return v;
-    }
-
-    public String getSpawnMsgByWorld(World w) {
-    	PerWorldState pws = getState(w.getName());
-    	String m = def_spawnmsg;
-    	if(pws.spawnmsg != null) 
-    		m = pws.spawnmsg;
-    	//System.out.println("getSpawnMsgByWorld(" + w.getName() + ")=" + m);
-    	return m;
-    }
-
-    public int getFullMoonRateByWorld(World w) {
-    	PerWorldState pws = getState(w.getName());
-    	int v = def_angerrate_moon;
-    	if(pws.angerrate_moon != null)
-    		v = pws.angerrate_moon.intValue();
-    	//System.out.println("getFullMoonRateByWorld(" + w.getName() + ")=" + v);
-    	return v;
-    }
-
-    public String getFullMoonMsgByWorld(World w) {
-    	PerWorldState pws = getState(w.getName());
-    	String m = pws.fullmoonmsg;
-    	if(m == null)
-    		m = def_fullmoonmsg;
-    	//System.out.println("getFullMoonMsgByWorld(" + w.getName() + ")=" + m);
-    	return m;
-    }
-
-    public int getMobToWolfRateByWorld(World w) {
-    	int v = def_mobtowolf_rate;
-    	PerWorldState pws = getState(w.getName());
-    	if(pws.mobtowolf_rate != null)
-    		v = pws.mobtowolf_rate.intValue();
-    	//System.out.println("getMobToWolfRateByWorld(" + w.getName() + ")=" + v);
-    	return v;
-    }
-    
-    public int getWolfInSheepRateByWorld(World w) {
-    	PerWorldState pws = getState(w.getName());
-    	int wisr = wolfinsheep_rate;
-    	if(pws.wolfinsheep_rate != null)
-    		wisr = pws.wolfinsheep_rate.intValue();
-    	return wisr;
-    }    
-   
-    public String getWolfInSheepMsgByWorld(World w) {
-    	PerWorldState pws = getState(w.getName());
-    	String wism = wolfinsheep_msg;
-    	if(pws.wolfinsheep_msg != null)
-    		wism = pws.wolfinsheep_msg;
-    	return wism;
-    }    
-    
-    public boolean getWolfFriendsByWorld(World w) {
-    	PerWorldState pws = getState(w.getName());
-    	boolean wf = wolffriend;
-    	if(pws.wolffriend != null)
-    		wf = pws.wolffriend;
-    	return wf;
-    }    
 
     /* Wrapper for fact that we don't have proper method for this yet - fix with CB has it */
     public boolean isTame(Wolf w) {
