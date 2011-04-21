@@ -60,7 +60,7 @@ public class AngryWolvesEntityListener extends EntityListener {
     		ct.equals(CreatureType.SPIDER) || ct.equals(CreatureType.SKELETON)) {
     		/* Find configuration for our location */
     		cfg = plugin.findByLocation(loc);
-    		System.out.println("mob: " + cfg);
+    		//System.out.println("mob: " + cfg);
     		int rate = cfg.getMobToWolfRate();
     		/* If so, percentage is relative to population of monsters (percent * 10% is chance we grab */
     		if((rate > 0) && (rnd.nextInt(1000) < rate)) {
@@ -89,7 +89,7 @@ public class AngryWolvesEntityListener extends EntityListener {
     		/* If not angry and not tame  */
     		if((w.isAngry() == false) && (plugin.isTame(w) == false) && (!plugin.isNormalSpawn())) {
         		cfg = plugin.findByLocation(loc);
-        		System.out.println("wolf: " + cfg);
+        		//System.out.println("wolf: " + cfg);
     			int rate = cfg.getSpawnAngerRate();
     			if((rate > 0) && (rnd.nextInt(100) < rate)) {
     				w.setAngry(true);
@@ -130,7 +130,7 @@ public class AngryWolvesEntityListener extends EntityListener {
     		Sheep s = (Sheep)e;
     		Location loc = s.getLocation();
     		AngryWolves.BaseConfig cfg = plugin.findByLocation(loc);
-    		System.out.println("sheep: " + cfg);
+    		//System.out.println("sheep: " + cfg);
     		int rate = cfg.getWolfInSheepRate();
     	
     		/* Use hashcode - random enough, and makes it so that something damaged
@@ -153,7 +153,7 @@ public class AngryWolvesEntityListener extends EntityListener {
     		}
     		/* If we don't do wolf-friends here, skip it */
     		AngryWolves.WorldConfig cfg = plugin.findByWorld(e.getWorld());
-    		System.out.println("wolffriend: " + cfg);
+    		//System.out.println("wolffriend: " + cfg);
     		if(cfg.getWolfFriendActive() == false) {
     			return;
     		}

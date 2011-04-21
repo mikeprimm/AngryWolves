@@ -172,7 +172,7 @@ public class AngryWolves extends JavaPlugin {
     			", wolfinsheeprate=" + this.getWolfInSheepRate() +
     			", wolfinsheepmsg=" + this.getWolfInSheepMsg() +
     			", angerratemoon=" + this.getSpawnAngerRateMoon() +
-    			", mobtowolfrate" + this.getMobToWolfRate();
+    			", mobtowolfrate=" + this.getMobToWolfRate();
     	}
     };
     
@@ -236,6 +236,13 @@ public class AngryWolves extends JavaPlugin {
    				wolffriend = n.getBoolean(CONFIG_WOLFFRIEND, false);
    			}
     	}
+    	
+    	public String toString() {
+    		return "dayspermoon=" + getDaysPerMoon() +
+    			", fullmoonmsg=" + getFullMoonMsg() +
+    			", wolffriend=" + getWolfFriendActive() +
+    			", " + super.toString();
+    	}
     };
     
     /* World state records - include config and operating state */
@@ -268,19 +275,20 @@ public class AngryWolves extends JavaPlugin {
     		super.loadConfiguration(n);	/* Load base attributes */
 
     		/* Get coordinates */
-    		List<Double> c = n.getDoubleList("coords", null);
-    		if((c == null) || (c.size() < 4)) {
-    			System.out.println("AngryWolved: coords list bad");
-    			return;
-    		}
-    		x_low = c.get(0);
-    		x_high = c.get(1);
-    		z_low = c.get(2);
-    		z_high = c.get(3);
+    		x_low = n.getDouble("xlow", 0);
+    		x_high = n.getDouble("xhigh", 0);
+    		z_low = n.getDouble("zlow", 0);
+    		z_high = n.getDouble("zhigh", 0);
     		/* Fix ordering, if needed */
     		double tmp;
     		if(x_low > x_high) { tmp = x_low; x_low = x_high; x_high = tmp; }
     		if(z_low > z_high) { tmp = z_low; z_low = z_high; z_high = tmp; }
+    	}
+    	
+    	public String toString() {
+    		return "name=" + areaname +
+    		    ", xlow=" + x_low + ", xhigh=" + x_high + ", zlow=" + z_low  + ", zhigh=" + z_high +
+    		    ", " + super.toString();
     	}
     };
 
@@ -492,7 +500,10 @@ public class AngryWolves extends JavaPlugin {
     			fos.println("areas:");
     			fos.println("  - name: Area51");
     			fos.println("    worldname: world");
-    			fos.println("    coords: 5, 200, 40, 60");
+    			fos.println("    xlow: 5");
+    			fos.println("    xhigh: 200");
+    			fos.println("    zlow: 40");
+    			fos.println("    zhigh: 100");
        			fos.println("    " + CONFIG_SPAWN_ANGERRATE + ": 100");
     			fos.println("    " + CONFIG_MOBTOWOLF_RATE + ": 100");
     			fos.close();
@@ -508,7 +519,8 @@ public class AngryWolves extends JavaPlugin {
     	/* Load default world-level configuration */
     	def_config = new WorldConfig(null);	/* Make base default object */
     	def_config.loadConfiguration(cfg);
-
+    	//System.out.println("defconfig: " + def_config);
+    	
     	/* Now, process world-specific overrides */
         List<ConfigurationNode> w = cfg.getNodeList("worlds", null);
         if(w != null) {
@@ -523,6 +535,7 @@ public class AngryWolves extends JavaPlugin {
         		dirty = migrateOldSettings(world) || dirty;
         		/* Now load settings */
         		pws.loadConfiguration(world);
+        		//System.out.println("world " + wname + ": " + pws);
         	}
         }
         /* Now, process area-specific overrides */
@@ -543,6 +556,7 @@ public class AngryWolves extends JavaPlugin {
         		pws.areas.add(ac);	/* Add us to our world */
         		/* Now load settings */
         		ac.loadConfiguration(area);
+        		//System.out.println("area " + aname + "/" + wname + ": " + ac);
         	}
         }
 
