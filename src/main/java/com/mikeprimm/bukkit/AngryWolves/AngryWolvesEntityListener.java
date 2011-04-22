@@ -91,6 +91,11 @@ public class AngryWolvesEntityListener extends EntityListener {
         		cfg = plugin.findByLocation(loc);
         		//System.out.println("wolf: " + cfg);
     			int rate = cfg.getSpawnAngerRate();
+    			int fmrate = cfg.getSpawnAngerRateMoon();
+    			/* If higher rate during full moon, check if we're having one */
+    			if((fmrate > rate) && plugin.isFullMoon(loc.getWorld())) {	
+    				rate = fmrate;
+    			}
     			if((rate > 0) && (rnd.nextInt(100) < rate)) {
     				w.setAngry(true);
     				did_it = true;
@@ -100,6 +105,7 @@ public class AngryWolvesEntityListener extends EntityListener {
     	if(did_it) {
     		/* And get our spawn message */
     		String sm = cfg.getSpawnMsg();
+    		double radius = (double)cfg.getSpawnMsgRadius();
 			if(sm != null) {
 				/* See if too soon (avoid spamming these messages) */
 				Long last = msg_ts_by_world.get(loc.getWorld().getName());
@@ -107,7 +113,17 @@ public class AngryWolvesEntityListener extends EntityListener {
 					msg_ts_by_world.put(loc.getWorld().getName(), Long.valueOf(System.currentTimeMillis()));
 					List<Player> pl = loc.getWorld().getPlayers();
 					for(Player p : pl) {
-						p.sendMessage(sm);
+						if(radius > 0.0) {	/* If radius limit, see if player is close enough */
+							Location ploc = p.getLocation();
+							double dx = ploc.getX() - loc.getX();
+							double dy = ploc.getY() - loc.getY();
+							double dz = ploc.getZ() - loc.getZ();
+							if(((dx*dx) + (dy*dy) + (dz*dz)) <= (radius*radius)) {
+								p.sendMessage(sm);
+							}
+						}
+						else
+							p.sendMessage(sm);
 					}
 				}
   			}
@@ -151,8 +167,8 @@ public class AngryWolvesEntityListener extends EntityListener {
     		if(!(e instanceof Player)) {	/* Not a player - don't worry */
     			return;
     		}
-    		/* If we don't do wolf-friends here, skip it */
-    		AngryWolves.WorldConfig cfg = plugin.findByWorld(e.getWorld());
+    		/* If we don't do wolf-friends here, skip it (check based on player's location) */
+    		AngryWolves.BaseConfig cfg = plugin.findByLocation(e.getLocation());
     		//System.out.println("wolffriend: " + cfg);
     		if(cfg.getWolfFriendActive() == false) {
     			return;
@@ -174,8 +190,8 @@ public class AngryWolvesEntityListener extends EntityListener {
     	if(!(t instanceof Player)) 	/* Don't worry about non-player targets */
     		return;
     	Player p = (Player)t;
-    	/* If we don't do wolf-friends here, skip it */
-    	AngryWolves.WorldConfig cfg = plugin.findByWorld(p.getWorld());
+    	/* If we don't do wolf-friends here, skip it (check based on player's location) */
+    	AngryWolves.BaseConfig cfg = plugin.findByLocation(p.getLocation());
 		if(cfg.getWolfFriendActive() == false) {
 			return;
 		}

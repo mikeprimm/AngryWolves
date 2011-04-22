@@ -36,9 +36,9 @@ public class AngryWolves extends JavaPlugin {
 
     /* Deprecated parms */
     public static final String CONFIG_ANGERRATE_DEFAULT = "angerrate";
-    public static final String CONFIG_SPAWNMSG_DEFAULT = "spawnmsg";
     public static final String CONFIG_ASALTMOB_DEFAULT = "asaltmob";
     /* New parameters */
+    public static final String CONFIG_SPAWNMSG_DEFAULT = "spawnmsg";
     public static final String CONFIG_SPAWN_ANGERRATE = "spawn-anger-rate";
     public static final String CONFIG_MOBTOWOLF_RATE = "mob-to-wolf-rate";
     public static final String CONFIG_DAYSPERMOON = "days-between-fullmoons";
@@ -47,11 +47,13 @@ public class AngryWolves extends JavaPlugin {
     public static final String CONFIG_WOLFINSHEEP_RATE = "wolf-in-sheep-rate";
     public static final String CONFIG_WOLFINSHEEP_MSG = "wolf-in-sheep-msg";
     public static final String CONFIG_WOLFFRIEND = "wolf-friends";
+    public static final String CONFIG_SPAWNMSGRADIUS = "spawnmsgradius";
     public static final int SPAWN_ANGERRATE_DEFAULT = 0;
     public static final int MOBTOWOLF_RATE_DEFAULT = 10;
     public static final int DAYSPERMOON_DEFAULT = 28;
     public static final int ANGERRATE_MOON_DEFAULT = 0;
     public static final int WOLFINSHEEP_RATE = 0;
+    public static final int SPAWNMSGRADIUS_DEFAULT = 0;	/* Unlimited */
     
     public static final String WOLF_FRIEND_PERM = "angrywolves.wolf-friend";
 
@@ -62,8 +64,10 @@ public class AngryWolves extends JavaPlugin {
     	Integer angerrate;
     	Integer angerrate_moon;
     	Integer	wolfinsheep_rate;
+    	Integer spawnmsgradius;
     	String wolfinsheep_msg;
-    	
+    	String fullmoonmsg;
+       	Boolean wolffriend;  	
     	abstract BaseConfig getParent();
     	
     	public String getSpawnMsg() {
@@ -132,7 +136,38 @@ public class AngryWolves extends JavaPlugin {
     		else
     			return "";
     	}
-
+    	
+       	public String getFullMoonMsg() {
+       		if(fullmoonmsg != null)
+       			return fullmoonmsg;
+    		BaseConfig p = getParent();
+    		if(p != null)
+    			return p.getFullMoonMsg();
+       		else
+       			return "";
+       	}
+       	
+       	public boolean getWolfFriendActive() {
+       		if(wolffriend != null)
+       			return wolffriend.booleanValue();
+    		BaseConfig p = getParent();
+    		if(p != null)
+    			return p.getWolfFriendActive();
+       		else
+       			return false;
+       	}
+       	
+    	public int getSpawnMsgRadius() {
+       		if(spawnmsgradius != null) {
+    			return spawnmsgradius.intValue();
+    		}
+    		BaseConfig p = getParent();
+    		if(p != null)
+    			return p.getSpawnMsgRadius();
+    		else
+    			return SPAWNMSGRADIUS_DEFAULT;    		
+    	}  	
+    	
     	void loadConfiguration(ConfigurationNode n) {
     		if(n.getProperty(CONFIG_SPAWN_ANGERRATE) != null) {
     			int spawn_ang = n.getInt(CONFIG_SPAWN_ANGERRATE, 0);
@@ -148,6 +183,11 @@ public class AngryWolves extends JavaPlugin {
     		if(n.getProperty(CONFIG_MOBTOWOLF_RATE) != null) {
     			int mobtowolf = n.getInt(CONFIG_MOBTOWOLF_RATE, 0);
     			mobtowolf_rate = Integer.valueOf(mobtowolf);
+    		}
+
+    		if(n.getProperty(CONFIG_SPAWNMSGRADIUS) != null) {
+    			int smrad = n.getInt(CONFIG_SPAWNMSGRADIUS, 0);
+    			spawnmsgradius = Integer.valueOf(smrad);
     		}
     		
     		if(n.getProperty(CONFIG_ANGERRATE_MOON) != null) {
@@ -165,13 +205,25 @@ public class AngryWolves extends JavaPlugin {
    			if((m != null) && (m.length() > 0)) {
    				wolfinsheep_msg = m;
    			}
+   			
+   			m = n.getString(CONFIG_FULLMOONMSG);
+   			if((m != null) && (m.length() > 0)) {
+   				fullmoonmsg = m;
+   			}
+
+   			if(n.getProperty(CONFIG_WOLFFRIEND) != null) {
+   				wolffriend = n.getBoolean(CONFIG_WOLFFRIEND, false);
+   			}
     	}
     	public String toString() {
     		return "spawnmsg=" + this.getSpawnMsg() +
+    		    ", spawnmsgradius=" + this.getSpawnMsgRadius() + 
     		    ", spawnrate=" + this.getSpawnAngerRate() + 
     			", wolfinsheeprate=" + this.getWolfInSheepRate() +
     			", wolfinsheepmsg=" + this.getWolfInSheepMsg() +
     			", angerratemoon=" + this.getSpawnAngerRateMoon() +
+    			", fullmoonmsg=" + getFullMoonMsg() +
+    			", wolffriend=" + getWolfFriendActive() +
     			", mobtowolfrate=" + this.getMobToWolfRate();
     	}
     };
@@ -180,8 +232,6 @@ public class AngryWolves extends JavaPlugin {
     public static class WorldConfig extends BaseConfig {
     	/* World-specific configuration attributes */
     	Integer days_per_moon;
-    	String fullmoonmsg;
-       	Boolean wolffriend;
        	
        	WorldConfig par;
        	
@@ -201,24 +251,6 @@ public class AngryWolves extends JavaPlugin {
        			return DAYSPERMOON_DEFAULT;
        	}
        	
-       	public String getFullMoonMsg() {
-       		if(fullmoonmsg != null)
-       			return fullmoonmsg;
-       		if(par != null)
-       			return par.getFullMoonMsg();
-       		else
-       			return "";
-       	}
-       	
-       	public boolean getWolfFriendActive() {
-       		if(wolffriend != null)
-       			return wolffriend.booleanValue();
-       		if(par != null)
-       			return par.getWolfFriendActive();
-       		else
-       			return false;
-       	}
-       	
     	void loadConfiguration(ConfigurationNode n) {
     		super.loadConfiguration(n);	/* Load base attributes */
 
@@ -227,20 +259,10 @@ public class AngryWolves extends JavaPlugin {
     			days_per_moon = Integer.valueOf(dpm);
     		}
 
-   			String m = n.getString(CONFIG_FULLMOONMSG);
-   			if((m != null) && (m.length() > 0)) {
-   				fullmoonmsg = m;
-   			}
-
-   			if(n.getProperty(CONFIG_WOLFFRIEND) != null) {
-   				wolffriend = n.getBoolean(CONFIG_WOLFFRIEND, false);
-   			}
     	}
     	
     	public String toString() {
     		return "dayspermoon=" + getDaysPerMoon() +
-    			", fullmoonmsg=" + getFullMoonMsg() +
-    			", wolffriend=" + getWolfFriendActive() +
     			", " + super.toString();
     	}
     };
@@ -260,6 +282,9 @@ public class AngryWolves extends JavaPlugin {
     /* Area level configuration attributes */
     public static class AreaConfig extends BaseConfig {
     	String areaname;
+    	double x[];
+    	double z[];
+    	/* Derived coords - bounding box, for fast dismissal during intersect test */
     	double x_low, x_high;
     	double z_low, z_high;
     	WorldConfig par;
@@ -273,18 +298,53 @@ public class AngryWolves extends JavaPlugin {
     	
     	void loadConfiguration(ConfigurationNode n) {
     		super.loadConfiguration(n);	/* Load base attributes */
-
-    		/* Get coordinates */
-    		x_low = n.getDouble("xlow", 0);
-    		x_high = n.getDouble("xhigh", 0);
-    		z_low = n.getDouble("zlow", 0);
-    		z_high = n.getDouble("zhigh", 0);
-    		/* Fix ordering, if needed */
-    		double tmp;
-    		if(x_low > x_high) { tmp = x_low; x_low = x_high; x_high = tmp; }
-    		if(z_low > z_high) { tmp = z_low; z_low = z_high; z_high = tmp; }
+    		/* Get coordinate list */
+            List<ConfigurationNode> cl = n.getNodeList("coords", null);
+            if(cl != null) {
+            	int len = cl.size();	/* Get number of elements in list */
+            	x = new double[len];
+            	z = new double[len];
+            	int i = 0;
+            	for(ConfigurationNode coord : cl) {	/* Loop through coords */
+            		x[i] = coord.getDouble("x", 0.0);
+            		z[i] = coord.getDouble("z", 0.0);	/* Read coordinates into array */
+            		if(i > 0) {	/* Compute bounding box */
+            			if(x[i] < x_low) x_low = x[i];
+            			if(x[i] > x_high) x_high = x[i];
+            			if(z[i] < z_low) z_low = z[i];
+            			if(z[i] > z_high) z_high = z[i];
+            		}
+            		else {
+            			x_low = x_high = x[i];
+            			z_low = z_high = z[i];
+            		}
+            		i++;
+            	}
+            }
     	}
-    	
+
+    	/* Test if given coordinates are inside our area - assumes world already checked */
+    	public boolean isInArea(double xval, double yval, double zval) {
+    		/* Do bounding box test first - fastest dismiss */
+    		if((xval < x_low) || (xval > x_high) || (zval < z_low) || (zval > z_high)) {
+    			return false;
+    		}
+    		/* Now, if we have 3 or more points, test if within the polygon too */
+    		if(x.length > 2) {
+    			/* Winding test - count edges looking towards -z */
+    			int i, j;
+    			boolean odd = false;
+    			for(i = 0, j = x.length-1; i < x.length; j = i++) {
+    				/* If x within range of next line segment, and z is to left of intersec at x=xval, hit */
+    				if( ((x[i] > xval) != (x[j] > xval)) &&
+    						(zval < (z[j]-z[i]) * (xval-x[i]) / (x[j] - x[i]) + z[i]) )
+    					odd = !odd;
+    			}
+    			return odd;	/* If odd, we're inside */
+    		}
+    		else	/* If 2 points, bounding box is enough */
+    			return true;
+    	}
     	public String toString() {
     		return "name=" + areaname +
     		    ", xlow=" + x_low + ", xhigh=" + x_high + ", zlow=" + z_low  + ", zhigh=" + z_high +
@@ -309,6 +369,11 @@ public class AngryWolves extends JavaPlugin {
     	return pws;
     }
     
+    public boolean isFullMoon(World w) {
+    	PerWorldState pws = getState(w.getName());
+    	return pws.moon_is_full;
+    }
+    
     /**
      *  Find configuration record, by world and coordinates
      * @param loc - location
@@ -317,10 +382,10 @@ public class AngryWolves extends JavaPlugin {
     public BaseConfig findByLocation(Location loc) {
     	PerWorldState pws = getState(loc.getWorld().getName());
     	if(pws.areas != null) {	/* Any areas? */
+    		double x = loc.getX(), y = loc.getY(), z = loc.getZ();
     		for(AreaConfig ac : pws.areas) {
     			/* If location is within area's rectangle */
-    			if((ac.x_low <= loc.getX()) && (ac.x_high >= loc.getX()) &&
-					(ac.z_low <= loc.getZ()) && (ac.z_high >= loc.getZ())) {
+    			if(ac.isInArea(x, y, z)) {
     				return ac;
     			}
     		}
@@ -362,26 +427,27 @@ public class AngryWolves extends JavaPlugin {
     					if(pws.moon_is_full == false) {
     						pws.moon_is_full = true;
     						/* And handle event */
-    						String msg = pws.getFullMoonMsg();
-    						if((msg != null) && (msg.length() > 0)) {
-    							List<Player> pl = world.getPlayers();
-    							for(Player p : pl) {
+    						List<Player> pl = world.getPlayers();
+    						for(Player p : pl) {
+    							AngryWolves.BaseConfig pc = findByLocation(p.getLocation());
+    							String msg = pc.getFullMoonMsg();
+    							/* Send the message to the player, if there is one */
+    							if((msg != null) && (msg.length() > 0)) {
     								p.sendMessage(msg);
     							}
     						}
     						/* And make the wolves angry */
-    						int rate = pws.getSpawnAngerRateMoon();
-    						if(rate > 0) { /* If non-zero */
-    							List<LivingEntity> lst = world.getLivingEntities();
-    							for(LivingEntity le : lst) {
-    								if(le instanceof Wolf) {
-    									Wolf wolf = (Wolf)le;
-    									/* If not angry and not tame, make angry */
-    									if((wolf.isAngry() == false) && (isTame(wolf) == false)) {
-    										if(rnd.nextInt(100) < rate) {
-    											wolf.setAngry(true);
-    										}
-    									}
+    						List<LivingEntity> lst = world.getLivingEntities();
+    						for(LivingEntity le : lst) {
+    							if(le instanceof Wolf) {
+    								Wolf wolf = (Wolf)le;
+    								/* If not angry and not tame, make angry */
+    								if((wolf.isAngry() == false) && (isTame(wolf) == false)) {
+    									/* Check situation at wolf's location */
+    									AngryWolves.BaseConfig wc = findByLocation(wolf.getLocation());
+										if(rnd.nextInt(100) < wc.getSpawnAngerRateMoon()) {
+											wolf.setAngry(true);
+										}
     								}
     							}
     						}
@@ -390,14 +456,14 @@ public class AngryWolves extends JavaPlugin {
     				else if(pws.moon_is_full) {	/* Was full, but over now */ 
     					pws.moon_is_full = false;
 						/* And make the wolves happy */
-						int rate = pws.getSpawnAngerRateMoon();
-						if(rate > 0) { /* If non-zero */
-	   						List<LivingEntity> lst = world.getLivingEntities();
-							for(LivingEntity le : lst) {
-								if(le instanceof Wolf) {
-									Wolf wolf = (Wolf)le;
-									/* If angry, make not angry */
-									if(wolf.isAngry()) {
+    					List<LivingEntity> lst = world.getLivingEntities();
+						for(LivingEntity le : lst) {
+							if(le instanceof Wolf) {
+								Wolf wolf = (Wolf)le;
+								/* If angry, make not angry */
+								if(wolf.isAngry()) {
+									/* If wolf's location is where moon anger happens, clear anger */
+									if(findByLocation(wolf.getLocation()).getSpawnAngerRateMoon() > 0) {
 										wolf.setAngry(false);
 										wolf.setTarget(null);
 									}
@@ -480,6 +546,8 @@ public class AngryWolves extends JavaPlugin {
     			fos.println(CONFIG_FULLMOONMSG + ": The wolves are baying at the full moon ...");
     			fos.println("# Optional spawn message");
     			fos.println("# spawnmsg: There's a bad moon on the rise...");
+    			fos.println("# Also, optional spawn message radius - limits message to only players within given number of blocks of spawn");
+    			fos.println("# spawnmsgradius: 50");
     			fos.println("# Wolf-in-sheeps-clothing rate : in 10ths of a percent");
     			fos.println(CONFIG_WOLFINSHEEP_RATE + ": 0");
     			fos.println(CONFIG_WOLFINSHEEP_MSG + ": Oh, no! A wolf in sheep's clothing!");
@@ -495,15 +563,16 @@ public class AngryWolves extends JavaPlugin {
     			fos.println("    " + CONFIG_SPAWN_ANGERRATE + ": 90");
     			fos.println("    " + CONFIG_MOBTOWOLF_RATE + ": 100");
     			fos.println("    spawnmsg: Something evil has entered the world...");
-    			fos.println("# Optional - for special settings limited to a rectangular area on one world");
-    			fos.println("#  'coords' are integer block coordinates: xlow, xhigh, zlow, zhigh");
+    			fos.println("# Optional - for special settings limited to an area on one world");
+    			fos.println("#  'coords' define the area, as a list of two or more coordinate values (each of which has an x and z attribute).");
     			fos.println("areas:");
     			fos.println("  - name: Area51");
     			fos.println("    worldname: world");
-    			fos.println("    xlow: 5");
-    			fos.println("    xhigh: 200");
-    			fos.println("    zlow: 40");
-    			fos.println("    zhigh: 100");
+    			fos.println("    coords:");
+    			fos.println("      - x: 200");
+    			fos.println("        z: 40");
+    			fos.println("      - x: 60");
+    			fos.println("        z: 100");
        			fos.println("    " + CONFIG_SPAWN_ANGERRATE + ": 100");
     			fos.println("    " + CONFIG_MOBTOWOLF_RATE + ": 100");
     			fos.close();
