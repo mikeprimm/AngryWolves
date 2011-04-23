@@ -1,6 +1,8 @@
 
 package com.mikeprimm.bukkit.AngryWolves;
 import java.util.HashMap;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.logging.Logger;
 import org.bukkit.entity.CreatureType;
@@ -360,6 +362,8 @@ public class AngryWolves extends JavaPlugin {
     
     private Random rnd = new Random(System.currentTimeMillis());
     
+    private Method istamemethod = null;
+    
     private static PerWorldState getState(String w) {
     	PerWorldState pws = per_world.get(w);
     	if(pws == null) {
@@ -485,6 +489,18 @@ public class AngryWolves extends JavaPlugin {
     	/* Initialize our permissions */
     	AngryWolvesPermissions.initialize(getServer());
     	
+    	/* Dynamically check for isTame method, until we get it in Bukkit.... */
+		try {
+			istamemethod = net.minecraft.server.EntityWolf.class.getMethod("m_", (Class [])null);
+			log.info("[AngryWolves] MC1.5 support enabled");
+		} catch (NoSuchMethodException nsmx) {
+			try {
+				istamemethod = net.minecraft.server.EntityWolf.class.getMethod("y", (Class [])null);
+				log.info("[AngryWolves] MC1.4 support enabled");
+			} catch (NoSuchMethodException nsmx2) {
+				log.info("[AngryWolves] Unsupport MC version!");
+			}
+		} 
     	/* Read in our configuration */
         readConfig();
 
@@ -495,7 +511,7 @@ public class AngryWolves extends JavaPlugin {
         pm.registerEvent(Event.Type.ENTITY_TARGET, entityListener, Priority.Normal, this);
         
         PluginDescriptionFile pdfFile = this.getDescription();
-        log.info( pdfFile.getName() + " version " + pdfFile.getVersion() + " is enabled" );
+        log.info("[AngryWolves] version " + pdfFile.getVersion() + " is enabled" );
         /* Start job to watch for sunset/sunrise (every 30 seconds or so) */
         getServer().getScheduler().scheduleSyncRepeatingTask(this, new CheckForMoon(), 0, 20*30);
     }
@@ -638,7 +654,14 @@ public class AngryWolves extends JavaPlugin {
     public boolean isTame(Wolf w) {
     	boolean tame = false;
     	if(w instanceof CraftWolf) {
-    		tame = ((CraftWolf)w).getHandle().y();
+    		if(istamemethod != null) {
+    			try {
+    				tame = (Boolean)istamemethod.invoke(((CraftWolf)w).getHandle(), (Object[])null);
+    			} catch (InvocationTargetException itx) {
+    			} catch (IllegalArgumentException e) {
+				} catch (IllegalAccessException e) {
+				}
+    		}
     	}
     	return tame;
     }
