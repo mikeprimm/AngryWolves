@@ -8,6 +8,7 @@ import java.util.logging.Logger;
 import org.bukkit.entity.CreatureType;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Wolf;
+import org.bukkit.entity.Tameable;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -35,7 +36,7 @@ public class AngryWolves extends JavaPlugin {
 	public static Logger log = Logger.getLogger("Minecraft");
     private final AngryWolvesEntityListener entityListener = new AngryWolvesEntityListener(this);
     private final HashMap<Player, Boolean> debugees = new HashMap<Player, Boolean>();
-
+    public boolean verbose = false;
     /* Deprecated parms */
     public static final String CONFIG_ANGERRATE_DEFAULT = "angerrate";
     public static final String CONFIG_ASALTMOB_DEFAULT = "asaltmob";
@@ -43,6 +44,10 @@ public class AngryWolves extends JavaPlugin {
     public static final String CONFIG_SPAWNMSG_DEFAULT = "spawnmsg";
     public static final String CONFIG_SPAWN_ANGERRATE = "spawn-anger-rate";
     public static final String CONFIG_MOBTOWOLF_RATE = "mob-to-wolf-rate";
+    public static final String CONFIG_CREEPERTOWOLF_RATE = "creeper-to-wolf-rate";
+    public static final String CONFIG_ZOMBIETOWOLF_RATE = "zombie-to-wolf-rate";
+    public static final String CONFIG_SPIDERTOWOLF_RATE = "spider-to-wolf-rate";
+    public static final String CONFIG_SKELETONTOWOLF_RATE = "skeleton-to-wolf-rate";
     public static final String CONFIG_DAYSPERMOON = "days-between-fullmoons";
     public static final String CONFIG_ANGERRATE_MOON = "anger-rate-fullmoon";
     public static final String CONFIG_FULLMOONMSG = "fullmoonmsg";
@@ -50,6 +55,7 @@ public class AngryWolves extends JavaPlugin {
     public static final String CONFIG_WOLFINSHEEP_MSG = "wolf-in-sheep-msg";
     public static final String CONFIG_WOLFFRIEND = "wolf-friends";
     public static final String CONFIG_SPAWNMSGRADIUS = "spawnmsgradius";
+    public static final String CONFIG_MOBTOWOLF_IGNORE_TERRAIN = "mobtowolf-ignore-terrain";
     public static final int SPAWN_ANGERRATE_DEFAULT = 0;
     public static final int MOBTOWOLF_RATE_DEFAULT = 10;
     public static final int DAYSPERMOON_DEFAULT = 28;
@@ -63,6 +69,10 @@ public class AngryWolves extends JavaPlugin {
     public static abstract class BaseConfig {
     	String spawnmsg;
     	Integer mobtowolf_rate;
+    	Integer creepertowolf_rate;
+    	Integer zombietowolf_rate;
+    	Integer skeletontowolf_rate;
+    	Integer spidertowolf_rate;
     	Integer angerrate;
     	Integer angerrate_moon;
     	Integer	wolfinsheep_rate;
@@ -70,6 +80,7 @@ public class AngryWolves extends JavaPlugin {
     	String wolfinsheep_msg;
     	String fullmoonmsg;
        	Boolean wolffriend;  	
+       	Boolean ignore_terrain;
     	abstract BaseConfig getParent();
     	
     	public String getSpawnMsg() {
@@ -82,14 +93,56 @@ public class AngryWolves extends JavaPlugin {
     		else
     			return "";
     	}
+    	/**
+    	 * Resolve mob-type specific rate, if any
+    	 * @param t - mob type
+    	 * @return rate, or null if not found 
+    	 */
+    	private Integer getMobSpecWolfRate(CreatureType t) {
+    		Integer r = null;
+    		switch(t) {
+    			case SKELETON:
+    				r = skeletontowolf_rate;
+    				break;
+    			case ZOMBIE:
+    				r = zombietowolf_rate;
+    				break;
+    			case SPIDER:
+    				r = spidertowolf_rate;
+    				break;
+    			case CREEPER:
+    				r = creepertowolf_rate;
+    				break;
+    		}
+    		if(r == null) {	/* Not defined here? check parents */
+        		BaseConfig p = getParent();
+        		if(p != null) {
+        			r = p.getMobSpecWolfRate(t);
+        		}    			
+    		}
+    		return r;
+    	}
     	
-    	public int getMobToWolfRate() {
+    	public int getMobToWolfRate(CreatureType mob) {
+    		int rate = 0;
+    		Integer r = getMobSpecWolfRate(mob);	/* See if specific rate defined */
+    		if(r == null) {	/* No? Check for general rate */
+    			rate = mobToWolfRate();
+    		}
+    		else {
+    			rate = r.intValue();
+    		}
+    		
+    		return rate;
+    	}
+    	
+    	private int mobToWolfRate() {
     		if(mobtowolf_rate != null) {
     			return mobtowolf_rate.intValue();
     		}
     		BaseConfig p = getParent();
     		if(p != null)
-    			return p.getMobToWolfRate();
+    			return p.mobToWolfRate();
     		else
     			return MOBTOWOLF_RATE_DEFAULT;    		
     	}
@@ -159,6 +212,16 @@ public class AngryWolves extends JavaPlugin {
        			return false;
        	}
        	
+       	public boolean getMobToWolfTerrainIgnore() {
+       		if(ignore_terrain != null)
+       			return ignore_terrain.booleanValue();
+       		BaseConfig p = getParent();
+       		if(p != null)
+       			return p.getMobToWolfTerrainIgnore();
+       		else
+       			return false;
+       	}
+       	
     	public int getSpawnMsgRadius() {
        		if(spawnmsgradius != null) {
     			return spawnmsgradius.intValue();
@@ -185,6 +248,26 @@ public class AngryWolves extends JavaPlugin {
     		if(n.getProperty(CONFIG_MOBTOWOLF_RATE) != null) {
     			int mobtowolf = n.getInt(CONFIG_MOBTOWOLF_RATE, 0);
     			mobtowolf_rate = Integer.valueOf(mobtowolf);
+    		}
+
+    		if(n.getProperty(CONFIG_CREEPERTOWOLF_RATE) != null) {
+    			int mobrate = n.getInt(CONFIG_CREEPERTOWOLF_RATE, 0);
+    			creepertowolf_rate = Integer.valueOf(mobrate);
+    		}
+
+    		if(n.getProperty(CONFIG_SKELETONTOWOLF_RATE) != null) {
+    			int mobrate = n.getInt(CONFIG_SKELETONTOWOLF_RATE, 0);
+    			skeletontowolf_rate = Integer.valueOf(mobrate);
+    		}
+
+    		if(n.getProperty(CONFIG_SPIDERTOWOLF_RATE) != null) {
+    			int mobrate = n.getInt(CONFIG_SPIDERTOWOLF_RATE, 0);
+    			spidertowolf_rate = Integer.valueOf(mobrate);
+    		}
+
+    		if(n.getProperty(CONFIG_ZOMBIETOWOLF_RATE) != null) {
+    			int mobrate = n.getInt(CONFIG_ZOMBIETOWOLF_RATE, 0);
+    			zombietowolf_rate = Integer.valueOf(mobrate);
     		}
 
     		if(n.getProperty(CONFIG_SPAWNMSGRADIUS) != null) {
@@ -216,6 +299,10 @@ public class AngryWolves extends JavaPlugin {
    			if(n.getProperty(CONFIG_WOLFFRIEND) != null) {
    				wolffriend = n.getBoolean(CONFIG_WOLFFRIEND, false);
    			}
+   			
+   			if(n.getProperty(CONFIG_MOBTOWOLF_IGNORE_TERRAIN) != null) {
+   				ignore_terrain = n.getBoolean(CONFIG_MOBTOWOLF_IGNORE_TERRAIN, false);
+   			}
     	}
     	public String toString() {
     		return "spawnmsg=" + this.getSpawnMsg() +
@@ -225,8 +312,7 @@ public class AngryWolves extends JavaPlugin {
     			", wolfinsheepmsg=" + this.getWolfInSheepMsg() +
     			", angerratemoon=" + this.getSpawnAngerRateMoon() +
     			", fullmoonmsg=" + getFullMoonMsg() +
-    			", wolffriend=" + getWolfFriendActive() +
-    			", mobtowolfrate=" + this.getMobToWolfRate();
+    			", wolffriend=" + getWolfFriendActive();
     	}
     };
     
@@ -363,6 +449,7 @@ public class AngryWolves extends JavaPlugin {
     private Random rnd = new Random(System.currentTimeMillis());
     
     private Method istamemethod = null;
+    private boolean use_bukkit_api = false;
     
     private static PerWorldState getState(String w) {
     	PerWorldState pws = per_world.get(w);
@@ -430,6 +517,7 @@ public class AngryWolves extends JavaPlugin {
     				if((dom == (dpm-1)) && ((t % 24000) > 12500)) {
     					if(pws.moon_is_full == false) {
     						pws.moon_is_full = true;
+    						if(verbose) log.info("Starting full moon in " + world.getName());
     						/* And handle event */
     						List<Player> pl = world.getPlayers();
     						for(Player p : pl) {
@@ -451,6 +539,7 @@ public class AngryWolves extends JavaPlugin {
     									AngryWolves.BaseConfig wc = findByLocation(wolf.getLocation());
 										if(rnd.nextInt(100) < wc.getSpawnAngerRateMoon()) {
 											wolf.setAngry(true);
+											if(verbose) log.info("Made wolf angry (full moon)");
 										}
     								}
     							}
@@ -459,6 +548,7 @@ public class AngryWolves extends JavaPlugin {
     				}
     				else if(pws.moon_is_full) {	/* Was full, but over now */ 
     					pws.moon_is_full = false;
+    					if(verbose) log.info("Full moon ended in " + world.getName());
 						/* And make the wolves happy */
     					List<LivingEntity> lst = world.getLivingEntities();
 						for(LivingEntity le : lst) {
@@ -470,6 +560,7 @@ public class AngryWolves extends JavaPlugin {
 									if(findByLocation(wolf.getLocation()).getSpawnAngerRateMoon() > 0) {
 										wolf.setAngry(false);
 										wolf.setTarget(null);
+										if(verbose) log.info("Made angry wolf calm (end-of-moon)");
 									}
 								}
 							}
@@ -490,17 +581,23 @@ public class AngryWolves extends JavaPlugin {
     	AngryWolvesPermissions.initialize(getServer());
     	
     	/* Dynamically check for isTame method, until we get it in Bukkit.... */
-		try {
-			istamemethod = net.minecraft.server.EntityWolf.class.getMethod("m_", (Class [])null);
-			log.info("[AngryWolves] MC1.5 support enabled");
-		} catch (NoSuchMethodException nsmx) {
-			try {
-				istamemethod = net.minecraft.server.EntityWolf.class.getMethod("y", (Class [])null);
-				log.info("[AngryWolves] MC1.4 support enabled");
-			} catch (NoSuchMethodException nsmx2) {
-				log.info("[AngryWolves] Unsupport MC version!");
-			}
-		} 
+    	try {
+    		istamemethod = org.bukkit.craftbukkit.entity.CraftWolf.class.getMethod("isTamed", (Class[])null);
+    		log.info("[AngryWolves] Bukkit Wolf API enabled");
+    		use_bukkit_api = true;
+    	} catch (NoSuchMethodException nsmx) {
+    		try {
+    			istamemethod = net.minecraft.server.EntityWolf.class.getMethod("m_", (Class [])null);
+    			log.info("[AngryWolves] MC1.5 support enabled");
+    		} catch (NoSuchMethodException nsmx2) {
+    			try {
+    				istamemethod = net.minecraft.server.EntityWolf.class.getMethod("y", (Class [])null);
+    				log.info("[AngryWolves] MC1.4 support enabled");
+    			} catch (NoSuchMethodException nsmx3) {
+    				log.info("[AngryWolves] Unsupport MC version!");
+    			}
+    		}
+    	}
     	/* Read in our configuration */
         readConfig();
 
@@ -551,10 +648,23 @@ public class AngryWolves extends JavaPlugin {
     			fos = new PrintWriter(new FileWriter(configfile));
     			fos.println("# Configuration file for AngryWolves);");
     			fos.println("#   spawn-anger-rate is percentage of normal wolf spawns that spawn angry");
-    			fos.println("#   mob-to-wolf-rate is the tenths of a percent of monster spawns that are replaced with angry wolves");
-                fos.println("# If undefined, spawn-anger-rate defaults to 0, mob-to-wolf-rate defaults to 10");
+    			fos.println("# If undefined, spawn-anger-rate defaults to 0");
     			fos.println(CONFIG_SPAWN_ANGERRATE + ": 5");
+    			fos.println("#   mob-to-wolf-rate is the TENTHS of a percent of monster spawns that are replaced with angry wolves");
+    			fos.println("#   spider-to-wolf-rate is the TENTHS of a percent of spider spawns that are replaced with angry wolves");
+    			fos.println("#   zombie-to-wolf-rate is the TENTHS of a percent of zombie spawns that are replaced with angry wolves");
+    			fos.println("#   skeleton-to-wolf-rate is the TENTHS of a percent of skeleton spawns that are replaced with angry wolves");
+    			fos.println("#   creeper-to-wolf-rate is the TENTHS of a percent of creeper spawns that are replaced with angry wolves");
+    			fos.println("#   note: if monster type specific rate is defined, it supercedes the mob-to-wolf-rate for that monster type");
+                fos.println("# If undefined, mob-to-wolf-rate defaults to 10, others are null");
     			fos.println(CONFIG_MOBTOWOLF_RATE + ": 10");
+    			fos.println("# " + CONFIG_SPIDERTOWOLF_RATE + ": 20");
+    			fos.println("# " + CONFIG_ZOMBIETOWOLF_RATE + ": 0");
+    			fos.println("# " + CONFIG_SKELETONTOWOLF_RATE + ": 5");
+    			fos.println("# " + CONFIG_CREEPERTOWOLF_RATE + ": 1000");
+    			fos.println("# mob-to-spawn-based spawns are normally limited to spawns occuring in valid biomes for wolves, as well as over valid wolf spawn terrain (grass)");
+    			fos.println("# " + CONFIG_MOBTOWOLF_IGNORE_TERRAIN + " can be set to 'true' to disable biome and terrain restrictions");
+    			fos.println("# " + CONFIG_MOBTOWOLF_IGNORE_TERRAIN + ": true");
     			fos.println("# If defined, can also have a 'full moon night' one out of every days-per-moon");
     			fos.println("# During this, anger-rate-fullmoon percent of non-tame wolves go angry");
     			fos.println(CONFIG_DAYSPERMOON + ": 28");
@@ -605,6 +715,7 @@ public class AngryWolves extends JavaPlugin {
     	def_config = new WorldConfig(null);	/* Make base default object */
     	def_config.loadConfiguration(cfg);
     	//System.out.println("defconfig: " + def_config);
+    	verbose = cfg.getBoolean("verbose", false);
     	
     	/* Now, process world-specific overrides */
         List<ConfigurationNode> w = cfg.getNodeList("worlds", null);
@@ -656,7 +767,12 @@ public class AngryWolves extends JavaPlugin {
     	if(w instanceof CraftWolf) {
     		if(istamemethod != null) {
     			try {
-    				tame = (Boolean)istamemethod.invoke(((CraftWolf)w).getHandle(), (Object[])null);
+    				if(use_bukkit_api) {	/* Proper API available */
+        				tame = (Boolean)istamemethod.invoke(w, (Object[])null);
+    				}
+    				else {
+    					tame = (Boolean)istamemethod.invoke(((CraftWolf)w).getHandle(), (Object[])null);
+    				}
     			} catch (InvocationTargetException itx) {
     			} catch (IllegalArgumentException e) {
 				} catch (IllegalAccessException e) {

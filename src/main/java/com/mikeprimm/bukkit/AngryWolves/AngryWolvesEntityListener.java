@@ -61,26 +61,33 @@ public class AngryWolvesEntityListener extends EntityListener {
     		/* Find configuration for our location */
     		cfg = plugin.findByLocation(loc);
     		//System.out.println("mob: " + cfg);
-    		int rate = cfg.getMobToWolfRate();
+    		int rate = cfg.getMobToWolfRate(ct);
+    		if(plugin.verbose) plugin.log.info("mobrate(" + ct + ")=" + rate);
     		/* If so, percentage is relative to population of monsters (percent * 10% is chance we grab */
     		if((rate > 0) && (rnd.nextInt(1000) < rate)) {
+    			boolean ignore_terrain = cfg.getMobToWolfTerrainIgnore();	/* See if we're ignoring terrain */
         		Block b = loc.getBlock();
         		Biome bio = b.getBiome();
+        		if(plugin.verbose) plugin.log.info("biome=" + bio + ", ignore=" + ignore_terrain);
+        			
         		/* If valid biome for wolf */
-        		if(bio.equals(Biome.FOREST) || bio.equals(Biome.TAIGA) || bio.equals(Biome.SEASONAL_FOREST)) {
-        			while((b != null) && (b.getType().equals(Material.AIR))) {
-        				b = b.getFace(BlockFace.DOWN);
+        		if(ignore_terrain || bio.equals(Biome.FOREST) || bio.equals(Biome.TAIGA) || bio.equals(Biome.SEASONAL_FOREST)) {
+        			if(!ignore_terrain) {
+        				while((b != null) && (b.getType().equals(Material.AIR))) {
+        					b = b.getFace(BlockFace.DOWN);
+        				}
+        				/* Quit if we're not over soil */
+        				if((b == null) || (!b.getType().equals(Material.GRASS))) {
+        					if(plugin.verbose) plugin.log.info("material=" + b.getType()); 
+        					return;
+        				}
         			}
-        			/* Quit if we're not over soil */
-        			if((b == null) || (!b.getType().equals(Material.GRASS))) {
-        				return;
-        			}
-
     				event.setCancelled(true);
     				DoSpawn ds = new DoSpawn();
     				ds.loc = loc;
     				plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, ds);
     				did_it = true;
+    				if(plugin.verbose) plugin.log.info("Mapped " + ct + " spawn to angry wolf");
     			}
     		}
     	}
@@ -99,6 +106,7 @@ public class AngryWolvesEntityListener extends EntityListener {
     			if((rate > 0) && (rnd.nextInt(100) < rate)) {
     				w.setAngry(true);
     				did_it = true;
+    				if(plugin.verbose) plugin.log.info("Made a spawned wolf angry");
     			}
     		}
     	}
@@ -106,7 +114,7 @@ public class AngryWolvesEntityListener extends EntityListener {
     		/* And get our spawn message */
     		String sm = cfg.getSpawnMsg();
     		double radius = (double)cfg.getSpawnMsgRadius();
-			if(sm != null) {
+			if((sm != null) && (sm.length() > 0)) {
 				/* See if too soon (avoid spamming these messages) */
 				Long last = msg_ts_by_world.get(loc.getWorld().getName());
 				if((last == null) || ((last.longValue() + SPAM_TIMER) < System.currentTimeMillis())) {
@@ -153,7 +161,9 @@ public class AngryWolvesEntityListener extends EntityListener {
     		 * once will trigger, or never will, even if damaged again */
     		if(new Random(e.hashCode()).nextInt(1000) >= rate)
     			return;
-    		p.sendMessage(cfg.getWolfInSheepMsg());
+    		String msg = cfg.getWolfInSheepMsg();
+    		if((msg != null) && (msg.length() > 0))
+    			p.sendMessage(cfg.getWolfInSheepMsg());
     		evt.setCancelled(true);	/* Cancel event */
     		e.remove();	/* Remove the sheep */
     	
@@ -161,6 +171,7 @@ public class AngryWolvesEntityListener extends EntityListener {
     		ds.loc = loc;
     		ds.tgt = p;
     		plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, ds);
+    		if(plugin.verbose) plugin.log.info("Made attacked sheep into angry wolf"); 
     	}
     	else if(damager instanceof Wolf) {
     		Entity e = event.getEntity();
@@ -176,6 +187,7 @@ public class AngryWolvesEntityListener extends EntityListener {
     		if(AngryWolvesPermissions.permission((Player)e, AngryWolves.WOLF_FRIEND_PERM)) {
     			event.setCancelled(true);	/* Cancel it */
     			((Wolf)damager).setTarget(null);	/* Target someone else */
+    			if(plugin.verbose) plugin.log.info("Cancelled attack on wolf-friend"); 
     		}
     	}
     }
@@ -197,6 +209,7 @@ public class AngryWolvesEntityListener extends EntityListener {
 		}
     	if(AngryWolvesPermissions.permission(p, AngryWolves.WOLF_FRIEND_PERM)) {	/* If player is a wolf-friend */
     		event.setCancelled(true);	/* Cancel it - not a valid target */
+    		if(plugin.verbose) plugin.log.info("Cancelled target on wolf friend");
     	}
     }
 }
