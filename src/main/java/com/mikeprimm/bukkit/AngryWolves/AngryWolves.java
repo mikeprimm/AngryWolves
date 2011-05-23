@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Random;
 import org.bukkit.craftbukkit.entity.CraftWolf;
+import java.util.Collections;
 
 /**
  * AngryWolves plugin - watch wolf spawns and make some of them angry by default
@@ -56,6 +57,9 @@ public class AngryWolves extends JavaPlugin {
     public static final String CONFIG_WOLFFRIEND = "wolf-friends";
     public static final String CONFIG_SPAWNMSGRADIUS = "spawnmsgradius";
     public static final String CONFIG_MOBTOWOLF_IGNORE_TERRAIN = "mobtowolf-ignore-terrain";
+    public static final String CONFIG_WOLFLOOT = "wolf-loot";
+    public static final String CONFIG_WOLFLOOT_RATE = "wolf-loot-rate";
+    
     public static final int SPAWN_ANGERRATE_DEFAULT = 0;
     public static final int MOBTOWOLF_RATE_DEFAULT = 10;
     public static final int DAYSPERMOON_DEFAULT = 28;
@@ -81,6 +85,8 @@ public class AngryWolves extends JavaPlugin {
     	String fullmoonmsg;
        	Boolean wolffriend;  	
        	Boolean ignore_terrain;
+       	Integer wolfloot_rate;
+       	List<Integer> wolfloot;
     	abstract BaseConfig getParent();
     	
     	public String getSpawnMsg() {
@@ -232,7 +238,29 @@ public class AngryWolves extends JavaPlugin {
     		else
     			return SPAWNMSGRADIUS_DEFAULT;    		
     	}  	
-    	
+
+        public int getWolfLootRate() {
+            if(wolfloot_rate != null) {
+                return wolfloot_rate.intValue();
+            }
+            BaseConfig p = getParent();
+            if(p != null)
+                return p.getWolfLootRate();
+            else
+                return 0;          
+        }   
+        
+        public List<Integer> getWolfLoot() {
+            if(wolfloot != null) {
+                return wolfloot;
+            }
+            BaseConfig p = getParent();
+            if(p != null)
+                return p.getWolfLoot();
+            else
+                return Collections.singletonList(Integer.valueOf(334));          
+        }   
+
     	void loadConfiguration(ConfigurationNode n) {
     		if(n.getProperty(CONFIG_SPAWN_ANGERRATE) != null) {
     			int spawn_ang = n.getInt(CONFIG_SPAWN_ANGERRATE, 0);
@@ -302,6 +330,12 @@ public class AngryWolves extends JavaPlugin {
    			
    			if(n.getProperty(CONFIG_MOBTOWOLF_IGNORE_TERRAIN) != null) {
    				ignore_terrain = n.getBoolean(CONFIG_MOBTOWOLF_IGNORE_TERRAIN, false);
+   			}
+   			if(n.getProperty(CONFIG_WOLFLOOT_RATE) != null) {
+   			    wolfloot_rate = n.getInt(CONFIG_WOLFLOOT_RATE, 0);
+   			}
+   			if(n.getProperty(CONFIG_WOLFLOOT) != null) {
+   			    wolfloot = n.getIntList(CONFIG_WOLFLOOT, Collections.singletonList(Integer.valueOf(334)));
    			}
     	}
     	public String toString() {
@@ -606,6 +640,7 @@ public class AngryWolves extends JavaPlugin {
         pm.registerEvent(Event.Type.CREATURE_SPAWN, entityListener, Priority.Normal, this);
         pm.registerEvent(Event.Type.ENTITY_DAMAGE, entityListener, Priority.Normal, this);
         pm.registerEvent(Event.Type.ENTITY_TARGET, entityListener, Priority.Normal, this);
+        pm.registerEvent(Event.Type.ENTITY_DEATH, entityListener, Priority.Normal, this);
         
         PluginDescriptionFile pdfFile = this.getDescription();
         log.info("[AngryWolves] version " + pdfFile.getVersion() + " is enabled" );
@@ -679,6 +714,9 @@ public class AngryWolves extends JavaPlugin {
     			fos.println(CONFIG_WOLFINSHEEP_MSG + ": Oh, no! A wolf in sheep's clothing!");
     			fos.println("# Optional - enable 'wolf-friends' : players with the 'angrywolves.wolf-friend' privilege will not be targetted by angry wolves!");
     			fos.println("# wolf-friends: true");
+    			fos.println("# Optional - enable wolf loot - wolf-loot-rate is percent change of drop, wolf-loot is list of item ids to select from (1 randomly picked)");
+    			fos.println("# " + CONFIG_WOLFLOOT_RATE + ": 50");
+    			fos.println("# " + CONFIG_WOLFLOOT + ": [ 334, 352, 319 ]");
     			fos.println("# For multi-world specific rates, fill in rate under section for each world");
     			fos.println("worlds:");
     			fos.println("  - name: world");

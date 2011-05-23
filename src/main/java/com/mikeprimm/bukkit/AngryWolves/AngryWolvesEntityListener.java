@@ -11,11 +11,13 @@ import org.bukkit.entity.Sheep;
 import org.bukkit.entity.Entity;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityTargetEvent;
 import org.bukkit.event.entity.EntityListener;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import java.util.Random;
 import java.util.List;
 import java.util.Map;
@@ -212,4 +214,19 @@ public class AngryWolvesEntityListener extends EntityListener {
     		if(plugin.verbose) plugin.log.info("Cancelled target on wolf friend");
     	}
     }
+    @Override
+    public void onEntityDeath(EntityDeathEvent event) {
+        Entity e = event.getEntity();
+        if(!(e instanceof Wolf))    /* Don't care about non-wolves */
+            return;
+        AngryWolves.BaseConfig cfg = plugin.findByLocation(e.getLocation());    /* Get our configuration for location */
+        if(cfg.getWolfLootRate() > rnd.nextInt(100)) {
+            List<Integer> loot = cfg.getWolfLoot();
+            int sz = loot.size();
+            if(sz > 0) {
+                int id = loot.get(rnd.nextInt(sz));
+                e.getWorld().dropItemNaturally(e.getLocation(), new ItemStack(id, 1));
+            }
+        }
+    }    
 }
