@@ -1,14 +1,11 @@
 
 package com.mikeprimm.bukkit.AngryWolves;
 import java.util.HashMap;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.logging.Logger;
 import org.bukkit.entity.CreatureType;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Wolf;
-import org.bukkit.entity.Tameable;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -25,7 +22,6 @@ import java.io.PrintWriter;
 import java.io.IOException;
 import java.util.List;
 import java.util.Random;
-import org.bukkit.craftbukkit.entity.CraftWolf;
 import java.util.Collections;
 
 /**
@@ -47,6 +43,7 @@ public class AngryWolves extends JavaPlugin {
     public static final String CONFIG_MOBTOWOLF_RATE = "mob-to-wolf-rate";
     public static final String CONFIG_CREEPERTOWOLF_RATE = "creeper-to-wolf-rate";
     public static final String CONFIG_ZOMBIETOWOLF_RATE = "zombie-to-wolf-rate";
+    public static final String CONFIG_PIGZOMBIETOWOLF_RATE = "pigzombie-to-wolf-rate";
     public static final String CONFIG_SPIDERTOWOLF_RATE = "spider-to-wolf-rate";
     public static final String CONFIG_SKELETONTOWOLF_RATE = "skeleton-to-wolf-rate";
     public static final String CONFIG_DAYSPERMOON = "days-between-fullmoons";
@@ -59,6 +56,7 @@ public class AngryWolves extends JavaPlugin {
     public static final String CONFIG_MOBTOWOLF_IGNORE_TERRAIN = "mobtowolf-ignore-terrain";
     public static final String CONFIG_WOLFLOOT = "wolf-loot";
     public static final String CONFIG_WOLFLOOT_RATE = "wolf-loot-rate";
+    public static final String CONFIG_HELLHOUND_RATE = "hellhound-rate";
     
     public static final int SPAWN_ANGERRATE_DEFAULT = 0;
     public static final int MOBTOWOLF_RATE_DEFAULT = 10;
@@ -66,6 +64,7 @@ public class AngryWolves extends JavaPlugin {
     public static final int ANGERRATE_MOON_DEFAULT = 0;
     public static final int WOLFINSHEEP_RATE = 0;
     public static final int SPAWNMSGRADIUS_DEFAULT = 0;	/* Unlimited */
+    public static final int HELLHOUND_RATE_DEFAULT = 10;
     
     public static final String WOLF_FRIEND_PERM = "angrywolves.wolf-friend";
 
@@ -75,8 +74,10 @@ public class AngryWolves extends JavaPlugin {
     	Integer mobtowolf_rate;
     	Integer creepertowolf_rate;
     	Integer zombietowolf_rate;
+    	Integer pigzombietowolf_rate;
     	Integer skeletontowolf_rate;
     	Integer spidertowolf_rate;
+    	Integer hellhound_rate;
     	Integer angerrate;
     	Integer angerrate_moon;
     	Integer	wolfinsheep_rate;
@@ -112,6 +113,9 @@ public class AngryWolves extends JavaPlugin {
     				break;
     			case ZOMBIE:
     				r = zombietowolf_rate;
+    				break;
+    			case PIG_ZOMBIE:
+    				r = pigzombietowolf_rate;
     				break;
     			case SPIDER:
     				r = spidertowolf_rate;
@@ -185,6 +189,17 @@ public class AngryWolves extends JavaPlugin {
     			return p.getWolfInSheepRate();
     		else
     			return WOLFINSHEEP_RATE;    		
+    	}
+
+    	public int getHellhoundRate() {
+       		if(hellhound_rate != null) {
+    			return hellhound_rate.intValue();
+    		}
+    		BaseConfig p = getParent();
+    		if(p != null)
+    			return p.getHellhoundRate();
+    		else
+    			return HELLHOUND_RATE_DEFAULT;    		
     	}
 
     	public String getWolfInSheepMsg() {
@@ -278,6 +293,11 @@ public class AngryWolves extends JavaPlugin {
     			mobtowolf_rate = Integer.valueOf(mobtowolf);
     		}
 
+    		if(n.getProperty(CONFIG_HELLHOUND_RATE) != null) {
+    			int hellhoundrate = n.getInt(CONFIG_HELLHOUND_RATE, 0);
+    			hellhound_rate = Integer.valueOf(hellhoundrate);
+    		}
+
     		if(n.getProperty(CONFIG_CREEPERTOWOLF_RATE) != null) {
     			int mobrate = n.getInt(CONFIG_CREEPERTOWOLF_RATE, 0);
     			creepertowolf_rate = Integer.valueOf(mobrate);
@@ -296,6 +316,11 @@ public class AngryWolves extends JavaPlugin {
     		if(n.getProperty(CONFIG_ZOMBIETOWOLF_RATE) != null) {
     			int mobrate = n.getInt(CONFIG_ZOMBIETOWOLF_RATE, 0);
     			zombietowolf_rate = Integer.valueOf(mobrate);
+    		}
+
+    		if(n.getProperty(CONFIG_PIGZOMBIETOWOLF_RATE) != null) {
+    			int mobrate = n.getInt(CONFIG_PIGZOMBIETOWOLF_RATE, 0);
+    			pigzombietowolf_rate = Integer.valueOf(mobrate);
     		}
 
     		if(n.getProperty(CONFIG_SPAWNMSGRADIUS) != null) {
@@ -482,9 +507,6 @@ public class AngryWolves extends JavaPlugin {
     
     private Random rnd = new Random(System.currentTimeMillis());
     
-    private Method istamemethod = null;
-    private boolean use_bukkit_api = false;
-    
     private static PerWorldState getState(String w) {
     	PerWorldState pws = per_world.get(w);
     	if(pws == null) {
@@ -614,24 +636,6 @@ public class AngryWolves extends JavaPlugin {
     	/* Initialize our permissions */
     	AngryWolvesPermissions.initialize(getServer());
     	
-    	/* Dynamically check for isTame method, until we get it in Bukkit.... */
-    	try {
-    		istamemethod = org.bukkit.craftbukkit.entity.CraftWolf.class.getMethod("isTamed", (Class[])null);
-    		log.info("[AngryWolves] Bukkit Wolf API enabled");
-    		use_bukkit_api = true;
-    	} catch (NoSuchMethodException nsmx) {
-    		try {
-    			istamemethod = net.minecraft.server.EntityWolf.class.getMethod("m_", (Class [])null);
-    			log.info("[AngryWolves] MC1.5 support enabled");
-    		} catch (NoSuchMethodException nsmx2) {
-    			try {
-    				istamemethod = net.minecraft.server.EntityWolf.class.getMethod("y", (Class [])null);
-    				log.info("[AngryWolves] MC1.4 support enabled");
-    			} catch (NoSuchMethodException nsmx3) {
-    				log.info("[AngryWolves] Unsupport MC version!");
-    			}
-    		}
-    	}
     	/* Read in our configuration */
         readConfig();
 
@@ -685,11 +689,15 @@ public class AngryWolves extends JavaPlugin {
     			fos.println("#   spawn-anger-rate is percentage of normal wolf spawns that spawn angry");
     			fos.println("# If undefined, spawn-anger-rate defaults to 0");
     			fos.println(CONFIG_SPAWN_ANGERRATE + ": 5");
+    			fos.println("#   hellhound-rate is percentage of angry wolfs that are hellhounds (flaming-fireproof-wolves)");
+    			fos.println("# If undefined, hellhound-rate defaults to 10.  In Nether, 100% of angry wolves are hellhounds.");
+    			fos.println(CONFIG_HELLHOUND_RATE + ": 10");
     			fos.println("#   mob-to-wolf-rate is the TENTHS of a percent of monster spawns that are replaced with angry wolves");
     			fos.println("#   spider-to-wolf-rate is the TENTHS of a percent of spider spawns that are replaced with angry wolves");
     			fos.println("#   zombie-to-wolf-rate is the TENTHS of a percent of zombie spawns that are replaced with angry wolves");
     			fos.println("#   skeleton-to-wolf-rate is the TENTHS of a percent of skeleton spawns that are replaced with angry wolves");
     			fos.println("#   creeper-to-wolf-rate is the TENTHS of a percent of creeper spawns that are replaced with angry wolves");
+    			fos.println("#   pig-zombie-to-wolf-rate is the TENTHS of a percent of pig-zombie spawns that are replaced with angry wolves");
     			fos.println("#   note: if monster type specific rate is defined, it supercedes the mob-to-wolf-rate for that monster type");
                 fos.println("# If undefined, mob-to-wolf-rate defaults to 10, others are null");
     			fos.println(CONFIG_MOBTOWOLF_RATE + ": 10");
@@ -697,6 +705,7 @@ public class AngryWolves extends JavaPlugin {
     			fos.println("# " + CONFIG_ZOMBIETOWOLF_RATE + ": 0");
     			fos.println("# " + CONFIG_SKELETONTOWOLF_RATE + ": 5");
     			fos.println("# " + CONFIG_CREEPERTOWOLF_RATE + ": 1000");
+    			fos.println("# " + CONFIG_PIGZOMBIETOWOLF_RATE + ": 20");
     			fos.println("# mob-to-spawn-based spawns are normally limited to spawns occuring in valid biomes for wolves, as well as over valid wolf spawn terrain (grass)");
     			fos.println("# " + CONFIG_MOBTOWOLF_IGNORE_TERRAIN + " can be set to 'true' to disable biome and terrain restrictions");
     			fos.println("# " + CONFIG_MOBTOWOLF_IGNORE_TERRAIN + ": true");
@@ -801,23 +810,7 @@ public class AngryWolves extends JavaPlugin {
 
     /* Wrapper for fact that we don't have proper method for this yet - fix with CB has it */
     public boolean isTame(Wolf w) {
-    	boolean tame = false;
-    	if(w instanceof CraftWolf) {
-    		if(istamemethod != null) {
-    			try {
-    				if(use_bukkit_api) {	/* Proper API available */
-        				tame = (Boolean)istamemethod.invoke(w, (Object[])null);
-    				}
-    				else {
-    					tame = (Boolean)istamemethod.invoke(((CraftWolf)w).getHandle(), (Object[])null);
-    				}
-    			} catch (InvocationTargetException itx) {
-    			} catch (IllegalArgumentException e) {
-				} catch (IllegalAccessException e) {
-				}
-    		}
-    	}
-    	return tame;
+    	return w.isTamed();
     }
    
     public boolean isDebugging(final Player player) {

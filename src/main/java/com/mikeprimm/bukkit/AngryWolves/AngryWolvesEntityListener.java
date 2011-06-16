@@ -11,6 +11,7 @@ import org.bukkit.entity.Sheep;
 import org.bukkit.entity.Entity;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityTargetEvent;
@@ -22,7 +23,8 @@ import java.util.Random;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
-
+import java.util.Set;
+import java.util.HashSet;
 /**
  * Entity listener - listen for spawns of wolves
  * @author MikePrimm
@@ -32,6 +34,8 @@ public class AngryWolvesEntityListener extends EntityListener {
     private final Random rnd = new Random(System.currentTimeMillis());
     private Map<String, Long> msg_ts_by_world = new HashMap<String, Long>();
     private static final long SPAM_TIMER = 60000;
+    private static Set<Integer> hellhound_ids = new HashSet<Integer>();
+    private static final int HELLHOUND_FIRETICKS = 60*20;	/* Do 60 seconds at a time */
     
     public AngryWolvesEntityListener(final AngryWolves plugin) {
         this.plugin = plugin;
@@ -40,12 +44,17 @@ public class AngryWolvesEntityListener extends EntityListener {
     private static class DoSpawn implements Runnable {
     	Location loc;
     	Player tgt;
+    	boolean is_hellhound;
     	public void run() {
     		Wolf w = (Wolf)loc.getWorld().spawnCreature(loc, CreatureType.WOLF);
     		if(w != null) {
     			w.setAngry(true);
     			if(tgt != null)
     				w.setTarget(tgt);
+    			if(is_hellhound) {
+    				hellhound_ids.add(Integer.valueOf(w.getEntityId()));	/* Add to table */
+    				w.setFireTicks(HELLHOUND_FIRETICKS);	/* Set it on fire */
+    			}
     		}
     	}
     }
@@ -59,37 +68,45 @@ public class AngryWolvesEntityListener extends EntityListener {
     	AngryWolves.BaseConfig cfg = null;
     	/* If monster spawn */
     	if(ct.equals(CreatureType.ZOMBIE) || ct.equals(CreatureType.CREEPER) ||
-    		ct.equals(CreatureType.SPIDER) || ct.equals(CreatureType.SKELETON)) {
+    		ct.equals(CreatureType.SPIDER) || ct.equals(CreatureType.SKELETON) ||
+    		ct.equals(CreatureType.PIG_ZOMBIE)) {
     		/* Find configuration for our location */
     		cfg = plugin.findByLocation(loc);
     		//System.out.println("mob: " + cfg);
     		int rate = cfg.getMobToWolfRate(ct);
-    		if(plugin.verbose) plugin.log.info("mobrate(" + ct + ")=" + rate);
+    		if(plugin.verbose) AngryWolves.log.info("mobrate(" + ct + ")=" + rate);
     		/* If so, percentage is relative to population of monsters (percent * 10% is chance we grab */
     		if((rate > 0) && (rnd.nextInt(1000) < rate)) {
     			boolean ignore_terrain = cfg.getMobToWolfTerrainIgnore();	/* See if we're ignoring terrain */
         		Block b = loc.getBlock();
         		Biome bio = b.getBiome();
-        		if(plugin.verbose) plugin.log.info("biome=" + bio + ", ignore=" + ignore_terrain);
-        			
-        		/* If valid biome for wolf */
-        		if(ignore_terrain || bio.equals(Biome.FOREST) || bio.equals(Biome.TAIGA) || bio.equals(Biome.SEASONAL_FOREST)) {
-        			if(!ignore_terrain) {
+        		if(plugin.verbose) AngryWolves.log.info("biome=" + bio + ", ignore=" + ignore_terrain);
+        		/* See if hellhound - only hellhounds substitute in Nether, use hellhound_rate elsewhere */
+        		boolean do_hellhound = (bio.equals(Biome.HELL) || (rnd.nextInt(100) <= cfg.getHellhoundRate()));
+        		/* If valid biome for wolf (or hellhound) */
+        		if(ignore_terrain || bio.equals(Biome.FOREST) || bio.equals(Biome.TAIGA) || bio.equals(Biome.SEASONAL_FOREST) ||
+        				bio.equals(Biome.HELL)) {
+    				/* If hellhound in hell, we're good */
+    				if(bio.equals(Biome.HELL)) {
+    					
+    				}
+    				else if(!ignore_terrain) {
         				while((b != null) && (b.getType().equals(Material.AIR))) {
         					b = b.getFace(BlockFace.DOWN);
         				}
         				/* Quit if we're not over soil */
         				if((b == null) || (!b.getType().equals(Material.GRASS))) {
-        					if(plugin.verbose) plugin.log.info("material=" + b.getType()); 
+        					if(plugin.verbose) AngryWolves.log.info("material=" + b.getType()); 
         					return;
         				}
         			}
     				event.setCancelled(true);
     				DoSpawn ds = new DoSpawn();
     				ds.loc = loc;
+    				ds.is_hellhound = do_hellhound;
     				plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, ds);
     				did_it = true;
-    				if(plugin.verbose) plugin.log.info("Mapped " + ct + " spawn to angry wolf");
+    				if(plugin.verbose) AngryWolves.log.info("Mapped " + ct + " spawn to angry wolf");
     			}
     		}
     	}
@@ -105,10 +122,19 @@ public class AngryWolvesEntityListener extends EntityListener {
     			if((fmrate > rate) && plugin.isFullMoon(loc.getWorld())) {	
     				rate = fmrate;
     			}
-    			if((rate > 0) && (rnd.nextInt(100) < rate)) {
+    			if((rate > 0) && (rnd.nextInt(100) <= rate)) {
     				w.setAngry(true);
+    				/* See if it is a hellhound! */
+    				rate = cfg.getHellhoundRate();
+    				if((rate > 0) && (rnd.nextInt(100) <= rate)) {
+    					hellhound_ids.add(w.getEntityId());
+    					w.setFireTicks(HELLHOUND_FIRETICKS);
+        				if(plugin.verbose) AngryWolves.log.info("Made a spawned wolf into a hellhound");
+    				}
+    				else {
+    					if(plugin.verbose) AngryWolves.log.info("Made a spawned wolf angry");
+    				}
     				did_it = true;
-    				if(plugin.verbose) plugin.log.info("Made a spawned wolf angry");
     			}
     		}
     	}
@@ -143,6 +169,16 @@ public class AngryWolvesEntityListener extends EntityListener {
     public void onEntityDamage(EntityDamageEvent event) {
     	if(event.isCancelled())
     		return;
+		Entity e = event.getEntity();
+    	/* If fire damage, see if it is a hellhound */
+    	if(hellhound_ids.contains(e.getEntityId())) {
+    		e.setFireTicks(HELLHOUND_FIRETICKS);
+        	DamageCause dc = event.getCause();
+        	if((dc == DamageCause.FIRE_TICK) || (dc == DamageCause.FIRE) || (dc == DamageCause.LAVA)) {
+    			event.setCancelled(true);	/* Cancel it - we're fireproof! */
+    			return;
+    		}
+    	}
     	if(!(event instanceof EntityDamageByEntityEvent))
     		return;
     	EntityDamageByEntityEvent evt = (EntityDamageByEntityEvent)event;
@@ -150,7 +186,6 @@ public class AngryWolvesEntityListener extends EntityListener {
     	if(damager instanceof Player) {
     		Player p = (Player)damager;
     		/* See if its a sheep */
-    		Entity e = evt.getEntity();
     		if(!(e instanceof Sheep))
     			return;
     		Sheep s = (Sheep)e;
@@ -173,10 +208,9 @@ public class AngryWolvesEntityListener extends EntityListener {
     		ds.loc = loc;
     		ds.tgt = p;
     		plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, ds);
-    		if(plugin.verbose) plugin.log.info("Made attacked sheep into angry wolf"); 
+    		if(plugin.verbose) AngryWolves.log.info("Made attacked sheep into angry wolf"); 
     	}
     	else if(damager instanceof Wolf) {
-    		Entity e = event.getEntity();
     		if(!(e instanceof Player)) {	/* Not a player - don't worry */
     			return;
     		}
@@ -189,7 +223,7 @@ public class AngryWolvesEntityListener extends EntityListener {
     		if(AngryWolvesPermissions.permission((Player)e, AngryWolves.WOLF_FRIEND_PERM)) {
     			event.setCancelled(true);	/* Cancel it */
     			((Wolf)damager).setTarget(null);	/* Target someone else */
-    			if(plugin.verbose) plugin.log.info("Cancelled attack on wolf-friend"); 
+    			if(plugin.verbose) AngryWolves.log.info("Cancelled attack on wolf-friend"); 
     		}
     	}
     }
@@ -200,6 +234,8 @@ public class AngryWolvesEntityListener extends EntityListener {
     	Entity e = event.getEntity();
     	if(!(e instanceof Wolf))	/* Don't care about non-wolves */
     		return;
+    	if(hellhound_ids.contains(e.getEntityId()))
+    		e.setFireTicks(HELLHOUND_FIRETICKS);
     	Entity t = event.getTarget();
     	if(!(t instanceof Player)) 	/* Don't worry about non-player targets */
     		return;
@@ -211,7 +247,7 @@ public class AngryWolvesEntityListener extends EntityListener {
 		}
     	if(AngryWolvesPermissions.permission(p, AngryWolves.WOLF_FRIEND_PERM)) {	/* If player is a wolf-friend */
     		event.setCancelled(true);	/* Cancel it - not a valid target */
-    		if(plugin.verbose) plugin.log.info("Cancelled target on wolf friend");
+    		if(plugin.verbose) AngryWolves.log.info("Cancelled target on wolf friend");
     	}
     }
     @Override
@@ -228,5 +264,7 @@ public class AngryWolvesEntityListener extends EntityListener {
                 e.getWorld().dropItemNaturally(e.getLocation(), new ItemStack(id, 1));
             }
         }
+        /* Forget the dead hellhound */
+        hellhound_ids.remove(e.getEntityId());
     }    
 }
