@@ -750,7 +750,7 @@ public class AngryWolves extends JavaPlugin {
     			fos.println("    " + CONFIG_MOBTOWOLF_RATE + ": 100");
     			fos.close();
     		} catch (IOException iox) {
-    			System.out.println("ERROR writing default configuration for AngryWolves");
+    			log.severe("ERROR writing default configuration for AngryWolves");
     			return;
     		}
     	}
@@ -761,7 +761,7 @@ public class AngryWolves extends JavaPlugin {
     	/* Load default world-level configuration */
     	def_config = new WorldConfig(null);	/* Make base default object */
     	def_config.loadConfiguration(cfg);
-    	//System.out.println("defconfig: " + def_config);
+    	//log.info("defconfig: " + def_config);
     	verbose = cfg.getBoolean("verbose", false);
     	
     	/* Now, process world-specific overrides */
@@ -778,7 +778,7 @@ public class AngryWolves extends JavaPlugin {
         		dirty = migrateOldSettings(world) || dirty;
         		/* Now load settings */
         		pws.loadConfiguration(world);
-        		//System.out.println("world " + wname + ": " + pws);
+        		//log.info("world " + wname + ": " + pws);
         	}
         }
         /* Now, process area-specific overrides */
@@ -799,7 +799,7 @@ public class AngryWolves extends JavaPlugin {
         		pws.areas.add(ac);	/* Add us to our world */
         		/* Now load settings */
         		ac.loadConfiguration(area);
-        		//System.out.println("area " + aname + "/" + wname + ": " + ac);
+        		//log.info("area " + aname + "/" + wname + ": " + ac);
         	}
         }
 
