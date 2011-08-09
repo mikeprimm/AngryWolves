@@ -1,6 +1,0 @@
-name: AngryWolves
-main: com.mikeprimm.bukkit.AngryWolves.AngryWolves
-version: 0.8.1
-author: mikeprimm
-softdep: [ Permissions ]
-
