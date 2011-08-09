@@ -73,7 +73,7 @@ public class AngryWolvesEntityListener extends EntityListener {
     		/* Find configuration for our location */
     		cfg = plugin.findByLocation(loc);
     		//plugin.log.info("mob: " + cfg);
-    		int rate = cfg.getMobToWolfRate(ct);
+    		int rate = cfg.getMobToWolfRate(ct, plugin.isFullMoon(loc.getWorld()));
     		if(plugin.verbose) AngryWolves.log.info("mobrate(" + ct + ")=" + rate);
     		/* If so, percentage is relative to population of monsters (percent * 10% is chance we grab */
     		if((rate > 0) && (rnd.nextInt(1000) < rate)) {
@@ -92,7 +92,7 @@ public class AngryWolvesEntityListener extends EntityListener {
     				}
     				else if(!ignore_terrain) {
         				while((b != null) && (b.getType().equals(Material.AIR))) {
-        					b = b.getFace(BlockFace.DOWN);
+        					b = b.getRelative(BlockFace.DOWN, 1);
         				}
         				/* Quit if we're not over soil */
         				if((b == null) || (!b.getType().equals(Material.GRASS))) {
@@ -171,7 +171,7 @@ public class AngryWolvesEntityListener extends EntityListener {
     		return;
 		Entity e = event.getEntity();
     	/* If fire damage, see if it is a hellhound */
-    	if(hellhound_ids.contains(e.getEntityId())) {
+    	if(isHellHound(e)) {
     		e.setFireTicks(HELLHOUND_FIRETICKS);
         	DamageCause dc = event.getCause();
         	if((dc == DamageCause.FIRE_TICK) || (dc == DamageCause.FIRE) || (dc == DamageCause.LAVA)) {
@@ -255,16 +255,38 @@ public class AngryWolvesEntityListener extends EntityListener {
         Entity e = event.getEntity();
         if(!(e instanceof Wolf))    /* Don't care about non-wolves */
             return;
+        Wolf w = (Wolf)e;
+        /* Forget the dead hellhound */
+        boolean was_hellhound = hellhound_ids.remove(e.getEntityId());
+        /* Check for loot */
         AngryWolves.BaseConfig cfg = plugin.findByLocation(e.getLocation());    /* Get our configuration for location */
-        if(cfg.getWolfLootRate() > rnd.nextInt(100)) {
-            List<Integer> loot = cfg.getWolfLoot();
+        boolean drop_loot = false;
+        if(was_hellhound && (cfg.getHellHoundLootRate() >= 0)) {
+        	drop_loot = cfg.getHellHoundLootRate() > rnd.nextInt(100);
+        }
+        else if(w.isAngry() && (cfg.getAngryWolfLootRate() >= 0)) {
+        	drop_loot = cfg.getAngryWolfLootRate() > rnd.nextInt(100);
+        }
+        else {
+        	drop_loot = cfg.getWolfLootRate() > rnd.nextInt(100);        	
+        }
+        if(drop_loot) {
+            List<Integer> loot;
+            if(was_hellhound && (cfg.getHellHoundLoot() != null))
+            	loot = cfg.getHellHoundLoot();
+            else if(w.isAngry() && (cfg.getAngryWolfLoot() != null))
+            	loot = cfg.getAngryWolfLoot();
+            else
+            	loot = cfg.getWolfLoot();
             int sz = loot.size();
             if(sz > 0) {
                 int id = loot.get(rnd.nextInt(sz));
                 e.getWorld().dropItemNaturally(e.getLocation(), new ItemStack(id, 1));
             }
         }
-        /* Forget the dead hellhound */
-        hellhound_ids.remove(e.getEntityId());
     }    
+    
+    public static final boolean isHellHound(Entity e) {
+    	return hellhound_ids.contains(e.getEntityId());
+    }
 }
