@@ -1,6 +1,10 @@
 name: AngryWolves
 main: com.mikeprimm.bukkit.AngryWolves.AngryWolves
-version: 0.8.5
+version: 0.8.6
 author: mikeprimm
 softdep: [ Permissions ]
 
+permissions:
+  angrywolves.wolf-friend:
+    description: Will not be attacked by Angry Wolves
+    default: op

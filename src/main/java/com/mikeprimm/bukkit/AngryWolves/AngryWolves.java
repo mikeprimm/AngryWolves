@@ -34,6 +34,10 @@ public class AngryWolves extends JavaPlugin {
     private final AngryWolvesEntityListener entityListener = new AngryWolvesEntityListener(this);
     private final HashMap<Player, Boolean> debugees = new HashMap<Player, Boolean>();
     public boolean verbose = false;
+    private int poplimit = ANGRYWOLF_POPLIMIT;
+    private double hellhound_dmgscale = HELLHOUND_DMGSCALE;
+    private int hellhound_health = HELLHOUND_HEALTH;
+    private int angrywolf_health = ANGRYWOLF_HEALTH;
     /* Deprecated parms */
     public static final String CONFIG_ANGERRATE_DEFAULT = "angerrate";
     public static final String CONFIG_ASALTMOB_DEFAULT = "asaltmob";
@@ -63,6 +67,10 @@ public class AngryWolves extends JavaPlugin {
     public static final String CONFIG_HELLHOUNDLOOT_RATE = "hellhound-loot-rate";
     public static final String CONFIG_HELLHOUND_RATE = "hellhound-rate";
     public static final String CONFIG_FULLMOON_STAY_ANGRY_RATE = "fullmoon-stay-angry-rate";
+    public static final String CONFIG_ANYGYWOLF_POPLIMIT = "angrywolf-pop-limit";
+    public static final String CONFIG_HELLHOUND_DAMAGESCALE = "hellhound-damagescale";
+    public static final String CONFIG_HELLHOUND_HEALTH = "hellhound-health";
+    public static final String CONFIG_ANGRYWOLF_HEALTH = "angrywolf-health";
     
     public static final int SPAWN_ANGERRATE_DEFAULT = 0;
     public static final int MOBTOWOLF_RATE_DEFAULT = 10;
@@ -73,6 +81,10 @@ public class AngryWolves extends JavaPlugin {
     public static final int HELLHOUND_RATE_DEFAULT = 10;
     public static final int FULLMOON_STAYANGRYRATE_DEFAULT = 0;
     public static final int MOBTOWOLF_RATE_MOON_DEFAULT = -1; /* Use MOBTOWOLF_RATE */
+    public static final int ANGRYWOLF_POPLIMIT = 200;
+    public static final double HELLHOUND_DMGSCALE = 0.5;
+    public static final int HELLHOUND_HEALTH = 20;
+    public static final int ANGRYWOLF_HEALTH = 8;
     
     public static final String WOLF_FRIEND_PERM = "angrywolves.wolf-friend";
 
@@ -851,6 +863,14 @@ public class AngryWolves extends JavaPlugin {
     			fos.println("# Optional - enable different loot for hellhounds (if not defined, wolf loot settings are used)");
     			fos.println("# " + CONFIG_HELLHOUNDLOOT_RATE + ": 90");
     			fos.println("# " + CONFIG_HELLHOUNDLOOT + ": [ 334, 352, 319 ]");
+    			fos.println("# Population limit for Angry Wolves and Hellhounds (combined for server)");
+    			fos.println("anygrywolf-pop-limit: 200");
+    			fos.println("# Angry Wolf initial health - normal wild wolves are 8, tamed wolves are 20");
+    			fos.println("angrywolf-health: 8");
+    			fos.println("# Hellhound initial health - normal wild wolves are 8, tamed wolves are 20");
+    			fos.println("hellhound-health: 10");
+    			fos.println("# Hellhound damage scale - multiplier for general damage to hellhounds (less that 1.0 reduces damage done to them)");
+    			fos.println("hellhound-damagescale: 0.5");
     			fos.println("# For multi-world specific rates, fill in rate under section for each world");
     			fos.println("worlds:");
     			fos.println("#  - name: world");
@@ -888,6 +908,13 @@ public class AngryWolves extends JavaPlugin {
     	def_config.loadConfiguration(cfg);
     	//log.info("defconfig: " + def_config);
     	verbose = cfg.getBoolean("verbose", false);
+    	poplimit = cfg.getInt(CONFIG_ANYGYWOLF_POPLIMIT, ANGRYWOLF_POPLIMIT);
+    	hellhound_dmgscale = cfg.getDouble(CONFIG_HELLHOUND_DAMAGESCALE, HELLHOUND_DMGSCALE);
+    	if(hellhound_dmgscale < 0) hellhound_dmgscale = 0.0;
+    	hellhound_health = cfg.getInt(CONFIG_HELLHOUND_HEALTH, HELLHOUND_HEALTH);
+    	if(hellhound_health < 1) hellhound_health = 1;
+    	angrywolf_health = cfg.getInt(CONFIG_ANGRYWOLF_HEALTH, ANGRYWOLF_HEALTH);
+    	if(angrywolf_health < 1) angrywolf_health = 1;
     	
     	/* Now, process world-specific overrides */
         List<ConfigurationNode> w = cfg.getNodeList("worlds", null);
@@ -933,7 +960,6 @@ public class AngryWolves extends JavaPlugin {
         }
     }
 
-    /* Wrapper for fact that we don't have proper method for this yet - fix with CB has it */
     public boolean isTame(Wolf w) {
     	return w.isTamed();
     }
@@ -946,6 +972,18 @@ public class AngryWolves extends JavaPlugin {
         }
     }
 
+    public int getPopulationLimit() {
+    	return poplimit;
+    }
+    public double getHellhoundDamageScale() {
+    	return hellhound_dmgscale;
+    }
+    public int getHellhoundHealth() {
+    	return hellhound_health;
+    }
+    public int getAngryWolfHealth() {
+    	return angrywolf_health;
+    }
 	/**
 	 * Public API - used to invoke world.spawnCreature for a wolf while preventing it from being angered
 	 */
