@@ -72,6 +72,8 @@ public class AngryWolvesEntityListener extends EntityListener {
     	Location loc = event.getLocation();
     	boolean did_it = false;
     	CreatureType ct = event.getCreatureType();
+    	if(ct == null)
+    		return;
     	AngryWolves.BaseConfig cfg = null;
     	/* If monster spawn */
     	if(ct.equals(CreatureType.ZOMBIE) || ct.equals(CreatureType.CREEPER) ||
@@ -138,10 +140,14 @@ public class AngryWolvesEntityListener extends EntityListener {
     					hellhound_ids.add(w.getEntityId());
     					w.setFireTicks(HELLHOUND_FIRETICKS);
         				if(plugin.verbose) AngryWolves.log.info("Made a spawned wolf into a hellhound");
+        				w.setTamed(true);	/* Get around health limit on untamed wolves */
         				w.setHealth(plugin.getHellhoundHealth());
+        				w.setTamed(false);
     				}
     				else {
+        				w.setTamed(true);	/* Get around health limit on untamed wolves */
     					w.setHealth(plugin.getAngryWolfHealth());
+        				w.setTamed(false);
     					if(plugin.verbose) AngryWolves.log.info("Made a spawned wolf angry");
     				}
     				did_it = true;
