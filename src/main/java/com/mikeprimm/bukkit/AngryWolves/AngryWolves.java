@@ -71,6 +71,7 @@ public class AngryWolves extends JavaPlugin {
     public static final String CONFIG_HELLHOUND_DAMAGESCALE = "hellhound-damagescale";
     public static final String CONFIG_HELLHOUND_HEALTH = "hellhound-health";
     public static final String CONFIG_ANGRYWOLF_HEALTH = "angrywolf-health";
+    public static final String CONFIG_HELLHOUND_FIREBALL_RATE = "hellhound-fireball-rate";
     
     public static final int SPAWN_ANGERRATE_DEFAULT = 0;
     public static final int MOBTOWOLF_RATE_DEFAULT = 10;
@@ -114,6 +115,7 @@ public class AngryWolves extends JavaPlugin {
        	List<Integer> angrywolfloot;
        	Integer hellhoundloot_rate;
        	List<Integer> hellhoundloot;
+       	Integer hellhound_fireball_rate;
     	abstract BaseConfig getParent();
     	
     	public String getSpawnMsg() {
@@ -287,7 +289,17 @@ public class AngryWolves extends JavaPlugin {
        		else
        			return false;
        	}
-       	
+
+        public int getHellhoundFireballRate() {
+            if(hellhound_fireball_rate != null)
+                return hellhound_fireball_rate.intValue();
+            BaseConfig p = getParent();
+            if(p != null)
+                return p.getHellhoundFireballRate();
+            else
+                return 0;
+        }
+
        	public boolean getMobToWolfTerrainIgnore() {
        		if(ignore_terrain != null)
        			return ignore_terrain.booleanValue();
@@ -463,7 +475,11 @@ public class AngryWolves extends JavaPlugin {
    			if(n.getProperty(CONFIG_WOLFFRIEND) != null) {
    				wolffriend = n.getBoolean(CONFIG_WOLFFRIEND, false);
    			}
-   			
+
+            if(n.getProperty(CONFIG_HELLHOUND_FIREBALL_RATE) != null) {
+                hellhound_fireball_rate = n.getInt(CONFIG_HELLHOUND_FIREBALL_RATE, 0);
+            }
+
    			if(n.getProperty(CONFIG_MOBTOWOLF_IGNORE_TERRAIN) != null) {
    				ignore_terrain = n.getBoolean(CONFIG_MOBTOWOLF_IGNORE_TERRAIN, false);
    			}

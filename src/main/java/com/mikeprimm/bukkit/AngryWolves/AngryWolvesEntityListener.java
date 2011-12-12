@@ -6,6 +6,9 @@ import org.bukkit.block.Biome;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.Material;
+import org.bukkit.entity.Fireball;
+import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.SmallFireball;
 import org.bukkit.entity.Wolf;
 import org.bukkit.entity.Sheep;
 import org.bukkit.entity.Entity;
@@ -19,12 +22,15 @@ import org.bukkit.event.entity.EntityListener;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.util.Vector;
+
 import java.util.Random;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.logging.Logger;
 /**
  * Entity listener - listen for spawns of wolves
  * @author MikePrimm
@@ -34,9 +40,13 @@ public class AngryWolvesEntityListener extends EntityListener {
     private final Random rnd = new Random(System.currentTimeMillis());
     private Map<String, Long> msg_ts_by_world = new HashMap<String, Long>();
     private static final long SPAM_TIMER = 60000;
-    private static Set<Integer> hellhound_ids = new HashSet<Integer>();
+    private static Map<Integer, HellHoundRecord> hellhound_ids = new HashMap<Integer, HellHoundRecord>();
     private static Set<Integer> angrywolf_ids = new HashSet<Integer>();
     private static final int HELLHOUND_FIRETICKS = 60*20;	/* Do 60 seconds at a time */
+    
+    private static class HellHoundRecord {
+        int fireball_tick;
+    }
     
     public AngryWolvesEntityListener(final AngryWolves plugin) {
         this.plugin = plugin;
@@ -54,9 +64,11 @@ public class AngryWolvesEntityListener extends EntityListener {
     			if(tgt != null)
     				w.setTarget(tgt);
     			if(is_hellhound) {
-    				hellhound_ids.add(Integer.valueOf(w.getEntityId()));	/* Add to table */
+    				hellhound_ids.put(Integer.valueOf(w.getEntityId()), new HellHoundRecord());	/* Add to table */
     				w.setFireTicks(HELLHOUND_FIRETICKS);	/* Set it on fire */
+    				w.setTamed(true);
     				w.setHealth(health);
+    				w.setTamed(false);
     			}
     			angrywolf_ids.add(Integer.valueOf(w.getEntityId()));
     		}
@@ -137,7 +149,7 @@ public class AngryWolvesEntityListener extends EntityListener {
     				/* See if it is a hellhound! */
     				rate = cfg.getHellhoundRate();
     				if((rate > 0) && (rnd.nextInt(100) <= rate)) {
-    					hellhound_ids.add(w.getEntityId());
+    					hellhound_ids.put(w.getEntityId(), new HellHoundRecord());
     					w.setFireTicks(HELLHOUND_FIRETICKS);
         				if(plugin.verbose) AngryWolves.log.info("Made a spawned wolf into a hellhound");
         				w.setTamed(true);	/* Get around health limit on untamed wolves */
@@ -188,9 +200,36 @@ public class AngryWolvesEntityListener extends EntityListener {
 		Entity e = event.getEntity();
     	/* If fire damage, see if it is a hellhound */
     	if(isHellHound(e)) {
+    	    Wolf w = (Wolf)e;
     		e.setFireTicks(HELLHOUND_FIRETICKS);
-        	DamageCause dc = event.getCause();
-        	if((dc == DamageCause.FIRE_TICK) || (dc == DamageCause.FIRE) || (dc == DamageCause.LAVA)) {
+            DamageCause dc = event.getCause();
+            LivingEntity tgt = w.getTarget();
+            if((dc == DamageCause.FIRE_TICK) && (tgt != null)) { 
+    		    Location loc = w.getEyeLocation();
+	            AngryWolves.BaseConfig cfg = plugin.findByLocation(loc);
+	            int rate = cfg.getHellhoundFireballRate();
+	            if(rate > 0) {
+	                HellHoundRecord r = hellhound_ids.get(e.getEntityId());
+	                if(r.fireball_tick < rate)
+	                    r.fireball_tick++;
+	                if(r.fireball_tick >= rate) {
+	                    Location tloc = tgt.getLocation();
+	                    double dist2 = tloc.distanceSquared(loc);
+	                    if((dist2 >= 4.0) && (dist2 <= 100.0)) {  /* Don't do fireballs when close in, or too far away */
+                            Vector dir = tloc.subtract(loc).toVector();    /* Get direction to target */
+                            Vector start = dir.multiply(1.0/dir.length());
+                            Fireball fireball = loc.getWorld().spawn(loc.add(start), Fireball.class);
+                            if(fireball != null) {
+                                fireball.setDirection(dir);
+                                fireball.setShooter(w);
+                            }
+                            r.fireball_tick = 0;
+	                    }
+	                }
+	            }
+    		}
+        	if((dc == DamageCause.FIRE_TICK) || (dc == DamageCause.FIRE) || (dc == DamageCause.LAVA) || 
+        	        ((dc == DamageCause.ENTITY_EXPLOSION) && (event.getEntity() instanceof Fireball))) {
     			event.setCancelled(true);	/* Cancel it - we're fireproof! */
     			return;
     		}
@@ -256,7 +295,7 @@ public class AngryWolvesEntityListener extends EntityListener {
     	Entity e = event.getEntity();
     	if(!(e instanceof Wolf))	/* Don't care about non-wolves */
     		return;
-    	if(hellhound_ids.contains(e.getEntityId()))
+    	if(hellhound_ids.containsKey(e.getEntityId()))
     		e.setFireTicks(HELLHOUND_FIRETICKS);
     	Entity t = event.getTarget();
     	if(!(t instanceof Player)) 	/* Don't worry about non-player targets */
@@ -279,7 +318,7 @@ public class AngryWolvesEntityListener extends EntityListener {
             return;
         Wolf w = (Wolf)e;
         /* Forget the dead hellhound */
-        boolean was_hellhound = hellhound_ids.remove(e.getEntityId());
+        boolean was_hellhound = hellhound_ids.remove(e.getEntityId()) != null;
         angrywolf_ids.remove(e.getEntityId());
         /* Check for loot */
         AngryWolves.BaseConfig cfg = plugin.findByLocation(e.getLocation());    /* Get our configuration for location */
@@ -310,6 +349,6 @@ public class AngryWolvesEntityListener extends EntityListener {
     }    
     
     public static final boolean isHellHound(Entity e) {
-    	return hellhound_ids.contains(e.getEntityId());
+    	return hellhound_ids.containsKey(e.getEntityId());
     }
 }
