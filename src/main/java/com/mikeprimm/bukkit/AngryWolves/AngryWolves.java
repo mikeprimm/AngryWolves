@@ -3,6 +3,7 @@ package com.mikeprimm.bukkit.AngryWolves;
 import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.logging.Logger;
+
 import org.bukkit.entity.CreatureType;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Wolf;
@@ -61,10 +62,13 @@ public class AngryWolves extends JavaPlugin {
     public static final String CONFIG_MOBTOWOLF_IGNORE_TERRAIN = "mobtowolf-ignore-terrain";
     public static final String CONFIG_WOLFLOOT = "wolf-loot";
     public static final String CONFIG_WOLFLOOT_RATE = "wolf-loot-rate";
+    public static final String CONFIG_WOLFXP = "wolf-xp";
     public static final String CONFIG_ANGRYWOLFLOOT = "angry-wolf-loot";
     public static final String CONFIG_ANGRYWOLFLOOT_RATE = "angry-wolf-loot-rate";
+    public static final String CONFIG_ANGRYWOLFXP = "angry-wolf-xp";
     public static final String CONFIG_HELLHOUNDLOOT = "hellhound-loot";
     public static final String CONFIG_HELLHOUNDLOOT_RATE = "hellhound-loot-rate";
+    public static final String CONFIG_HELLHOUNDXP = "hellhound-xp";
     public static final String CONFIG_HELLHOUND_RATE = "hellhound-rate";
     public static final String CONFIG_FULLMOON_STAY_ANGRY_RATE = "fullmoon-stay-angry-rate";
     public static final String CONFIG_ANYGYWOLF_POPLIMIT = "angrywolf-pop-limit";
@@ -72,6 +76,8 @@ public class AngryWolves extends JavaPlugin {
     public static final String CONFIG_HELLHOUND_HEALTH = "hellhound-health";
     public static final String CONFIG_ANGRYWOLF_HEALTH = "angrywolf-health";
     public static final String CONFIG_HELLHOUND_FIREBALL_RATE = "hellhound-fireball-rate";
+    public static final String CONFIG_HELLHOUND_FIREBALL_RANGE = "hellhound-fireball-range";
+    public static final String CONFIG_HELLHOUND_FIREBALL_INCENDIARY = "hellhound-fireball-incendiary";
     
     public static final int SPAWN_ANGERRATE_DEFAULT = 0;
     public static final int MOBTOWOLF_RATE_DEFAULT = 10;
@@ -111,11 +117,16 @@ public class AngryWolves extends JavaPlugin {
        	Boolean ignore_terrain;
        	Integer wolfloot_rate;
        	List<Integer> wolfloot;
+        Integer wolfxp;
        	Integer angrywolfloot_rate;
        	List<Integer> angrywolfloot;
+        Integer angrywolfxp;
        	Integer hellhoundloot_rate;
        	List<Integer> hellhoundloot;
+        Integer hellhoundxp;
        	Integer hellhound_fireball_rate;
+        Integer hellhound_fireball_range;
+        Boolean hellhound_fireball_incendiary;
     	abstract BaseConfig getParent();
     	
     	public String getSpawnMsg() {
@@ -300,6 +311,26 @@ public class AngryWolves extends JavaPlugin {
                 return 0;
         }
 
+        public int getHellhoundFireballRange() {
+            if(hellhound_fireball_range != null)
+                return hellhound_fireball_range.intValue();
+            BaseConfig p = getParent();
+            if(p != null)
+                return p.getHellhoundFireballRange();
+            else
+                return 10;
+        }
+
+        public boolean getHellhoundFireballIncendiary() {
+            if(hellhound_fireball_incendiary != null)
+                return hellhound_fireball_incendiary.booleanValue();
+            BaseConfig p = getParent();
+            if(p != null)
+                return p.getHellhoundFireballIncendiary();
+            else
+                return false;
+        }
+
        	public boolean getMobToWolfTerrainIgnore() {
        		if(ignore_terrain != null)
        			return ignore_terrain.booleanValue();
@@ -331,7 +362,18 @@ public class AngryWolves extends JavaPlugin {
             else
                 return 0;          
         }   
-        
+
+        public int getWolfXP() {
+            if(wolfxp != null) {
+                return wolfxp.intValue();
+            }
+            BaseConfig p = getParent();
+            if(p != null)
+                return p.getWolfXP();
+            else
+                return 0;          
+        }   
+
         public List<Integer> getWolfLoot() {
             if(wolfloot != null) {
                 return wolfloot;
@@ -353,7 +395,18 @@ public class AngryWolves extends JavaPlugin {
             else
                 return 0;          
         }   
-        
+
+        public int getAngryWolfXP() {
+            if(angrywolfxp != null) {
+                return angrywolfxp.intValue();
+            }
+            BaseConfig p = getParent();
+            if(p != null)
+                return p.getAngryWolfXP();
+            else
+                return 0;          
+        }   
+
         public List<Integer> getAngryWolfLoot() {
             if(angrywolfloot != null) {
                 return angrywolfloot;
@@ -374,6 +427,17 @@ public class AngryWolves extends JavaPlugin {
                 return p.getHellHoundLootRate();
             else
                 return -1;	/* Use wolf rate */          
+        }   
+
+        public int getHellHoundXP() {
+            if(hellhoundxp != null) {
+                return hellhoundxp.intValue();
+            }
+            BaseConfig p = getParent();
+            if(p != null)
+                return p.getHellHoundXP();
+            else
+                return -1;  /* Use wolf rate */          
         }   
 
         public List<Integer> getHellHoundLoot() {
@@ -479,6 +543,12 @@ public class AngryWolves extends JavaPlugin {
             if(n.getProperty(CONFIG_HELLHOUND_FIREBALL_RATE) != null) {
                 hellhound_fireball_rate = n.getInt(CONFIG_HELLHOUND_FIREBALL_RATE, 0);
             }
+            if(n.getProperty(CONFIG_HELLHOUND_FIREBALL_RANGE) != null) {
+                hellhound_fireball_range = n.getInt(CONFIG_HELLHOUND_FIREBALL_RANGE, 10);
+            }
+            if(n.getProperty(CONFIG_HELLHOUND_FIREBALL_INCENDIARY) != null) {
+                hellhound_fireball_incendiary = n.getBoolean(CONFIG_HELLHOUND_FIREBALL_INCENDIARY, false);
+            }
 
    			if(n.getProperty(CONFIG_MOBTOWOLF_IGNORE_TERRAIN) != null) {
    				ignore_terrain = n.getBoolean(CONFIG_MOBTOWOLF_IGNORE_TERRAIN, false);
@@ -489,18 +559,27 @@ public class AngryWolves extends JavaPlugin {
    			if(n.getProperty(CONFIG_WOLFLOOT) != null) {
    			    wolfloot = n.getIntList(CONFIG_WOLFLOOT, Collections.singletonList(Integer.valueOf(334)));
    			}
+            if(n.getProperty(CONFIG_WOLFXP) != null) {
+                wolfxp = n.getInt(CONFIG_WOLFXP, 0);
+            }
    			if(n.getProperty(CONFIG_ANGRYWOLFLOOT_RATE) != null) {
    			    angrywolfloot_rate = n.getInt(CONFIG_ANGRYWOLFLOOT_RATE, -1);
    			}
    			if(n.getProperty(CONFIG_ANGRYWOLFLOOT) != null) {
    			    angrywolfloot = n.getIntList(CONFIG_ANGRYWOLFLOOT, null);
    			}
+            if(n.getProperty(CONFIG_ANGRYWOLFXP) != null) {
+                angrywolfxp = n.getInt(CONFIG_ANGRYWOLFXP, 0);
+            }
    			if(n.getProperty(CONFIG_HELLHOUNDLOOT_RATE) != null) {
    			    hellhoundloot_rate = n.getInt(CONFIG_HELLHOUNDLOOT_RATE, -1);
    			}
    			if(n.getProperty(CONFIG_HELLHOUNDLOOT) != null) {
    			    hellhoundloot = n.getIntList(CONFIG_HELLHOUNDLOOT, null);
    			}
+            if(n.getProperty(CONFIG_HELLHOUNDXP) != null) {
+                hellhoundxp = n.getInt(CONFIG_HELLHOUNDXP, 0);
+            }
     	}
     	public String toString() {
     		return "spawnmsg=" + this.getSpawnMsg() +
@@ -795,33 +874,11 @@ public class AngryWolves extends JavaPlugin {
         getServer().getScheduler().scheduleSyncRepeatingTask(this, new CheckForMoon(), 0, 20*30);
     }
     
-    private boolean migrateOldSettings(ConfigurationNode cfg) {
-    	boolean dirty = false;
-    	
-    	boolean asmob = cfg.getBoolean(CONFIG_ASALTMOB_DEFAULT, true);
-    	Object v = cfg.getProperty(CONFIG_ANGERRATE_DEFAULT);
-    	if(v != null) {
-    		if(asmob) {	/* Was set to asaltmob=true */
-    			cfg.setProperty(CONFIG_SPAWN_ANGERRATE, Integer.valueOf(0));
-    			cfg.setProperty(CONFIG_MOBTOWOLF_RATE, v);
-    		}
-    		else {
-    			cfg.setProperty(CONFIG_SPAWN_ANGERRATE, v);
-    			cfg.setProperty(CONFIG_MOBTOWOLF_RATE, Integer.valueOf(0));
-    		}
-    		cfg.removeProperty(CONFIG_ANGERRATE_DEFAULT);
-    		cfg.removeProperty(CONFIG_ASALTMOB_DEFAULT);
-    		dirty = true;
-    	}
-    	return dirty;
-    }
-    
     private void readConfig() {    	
     	File configdir = getDataFolder();	/* Get our data folder */
     	if(configdir.exists() == false) {	/* Not yet defined? */
     		configdir.mkdirs();				/* Create it */
     	}
-    	/* Initialize configuration object */
     	File configfile = new File(configdir, "AngryWolves.yml");	/* Our YML file */
     	Configuration cfg = new Configuration(configfile);
     	if(configfile.exists() == false) {	/* Not defined yet? */
@@ -916,8 +973,7 @@ public class AngryWolves extends JavaPlugin {
     		}
     	}
     	cfg.load();		/* Load it */
-    	/* Migrate old settings */
-    	boolean dirty = migrateOldSettings(cfg);
+    	boolean dirty = false;
 
     	/* Load default world-level configuration */
     	def_config = new WorldConfig(null);	/* Make base default object */
@@ -942,8 +998,6 @@ public class AngryWolves extends JavaPlugin {
         		/* Load/initialize per world state/config */
         		PerWorldState pws = getState(wname);
         		pws.par = def_config;	/* Our parent is global default */
-        		/* Migrate old settings, if needed */
-        		dirty = migrateOldSettings(world) || dirty;
         		/* Now load settings */
         		pws.loadConfiguration(world);
         		//log.info("world " + wname + ": " + pws);

@@ -199,7 +199,8 @@ public class AngryWolvesEntityListener extends EntityListener {
     		return;
 		Entity e = event.getEntity();
     	/* If fire damage, see if it is a hellhound */
-    	if(isHellHound(e)) {
+        HellHoundRecord r = hellhound_ids.get(e.getEntityId());
+    	if(r != null) {
     	    Wolf w = (Wolf)e;
     		e.setFireTicks(HELLHOUND_FIRETICKS);
             DamageCause dc = event.getCause();
@@ -209,19 +210,20 @@ public class AngryWolvesEntityListener extends EntityListener {
 	            AngryWolves.BaseConfig cfg = plugin.findByLocation(loc);
 	            int rate = cfg.getHellhoundFireballRate();
 	            if(rate > 0) {
-	                HellHoundRecord r = hellhound_ids.get(e.getEntityId());
 	                if(r.fireball_tick < rate)
 	                    r.fireball_tick++;
 	                if(r.fireball_tick >= rate) {
 	                    Location tloc = tgt.getLocation();
 	                    double dist2 = tloc.distanceSquared(loc);
-	                    if((dist2 >= 4.0) && (dist2 <= 100.0)) {  /* Don't do fireballs when close in, or too far away */
+	                    int range = cfg.getHellhoundFireballRange();
+	                    if((dist2 >= 4.0) && (dist2 <= range*range)) {  /* Don't do fireballs when close in, or too far away */
                             Vector dir = tloc.subtract(loc).toVector();    /* Get direction to target */
                             Vector start = dir.multiply(1.0/dir.length());
                             Fireball fireball = loc.getWorld().spawn(loc.add(start), Fireball.class);
                             if(fireball != null) {
                                 fireball.setDirection(dir);
                                 fireball.setShooter(w);
+                                fireball.setIsIncendiary(cfg.getHellhoundFireballIncendiary());
                             }
                             r.fireball_tick = 0;
 	                    }
@@ -323,14 +325,25 @@ public class AngryWolvesEntityListener extends EntityListener {
         /* Check for loot */
         AngryWolves.BaseConfig cfg = plugin.findByLocation(e.getLocation());    /* Get our configuration for location */
         boolean drop_loot = false;
+        boolean drop_xp = false;
+        EntityDamageEvent ede = w.getLastDamageCause();
+        if((ede != null) && ((ede.getCause() == DamageCause.ENTITY_ATTACK) || (ede.getCause() == DamageCause.PROJECTILE))) {
+            drop_xp = true;
+        }
         if(was_hellhound && (cfg.getHellHoundLootRate() >= 0)) {
         	drop_loot = cfg.getHellHoundLootRate() > rnd.nextInt(100);
+        	if(drop_xp)
+        	    event.setDroppedExp(cfg.getHellHoundXP());
         }
         else if(w.isAngry() && (cfg.getAngryWolfLootRate() >= 0)) {
         	drop_loot = cfg.getAngryWolfLootRate() > rnd.nextInt(100);
+            if(drop_xp)
+                event.setDroppedExp(cfg.getAngryWolfXP());
         }
         else {
         	drop_loot = cfg.getWolfLootRate() > rnd.nextInt(100);        	
+            if(drop_xp)
+                event.setDroppedExp(cfg.getWolfXP());
         }
         if(drop_loot) {
             List<Integer> loot;
@@ -343,7 +356,10 @@ public class AngryWolvesEntityListener extends EntityListener {
             int sz = loot.size();
             if(sz > 0) {
                 int id = loot.get(rnd.nextInt(sz));
-                e.getWorld().dropItemNaturally(e.getLocation(), new ItemStack(id, 1));
+                List<ItemStack> drop = event.getDrops();
+                if(drop != null) {
+                    drop.add(new ItemStack(id, 1));
+                }
             }
         }
     }    
