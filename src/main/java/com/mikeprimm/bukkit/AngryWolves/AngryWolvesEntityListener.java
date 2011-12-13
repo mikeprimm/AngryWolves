@@ -52,25 +52,37 @@ public class AngryWolvesEntityListener extends EntityListener {
         this.plugin = plugin;
     }
 
+    private static boolean doing_spawn;
+    
     private static class DoSpawn implements Runnable {
     	Location loc;
     	Player tgt;
     	boolean is_hellhound;
+    	boolean angry;
+    	boolean pup;
     	int health;
     	public void run() {
+    	    doing_spawn = true;
     		Wolf w = (Wolf)loc.getWorld().spawnCreature(loc, CreatureType.WOLF);
+    		doing_spawn = false;
     		if(w != null) {
-    			w.setAngry(true);
+    		    if(angry)
+    		        w.setAngry(true);
     			if(tgt != null)
     				w.setTarget(tgt);
     			if(is_hellhound) {
     				hellhound_ids.put(Integer.valueOf(w.getEntityId()), new HellHoundRecord());	/* Add to table */
     				w.setFireTicks(HELLHOUND_FIRETICKS);	/* Set it on fire */
-    				w.setTamed(true);
-    				w.setHealth(health);
-    				w.setTamed(false);
     			}
-    			angrywolf_ids.add(Integer.valueOf(w.getEntityId()));
+    			if(angry) {
+                    w.setTamed(true);
+                    w.setHealth(health);
+                    w.setTamed(false);
+    			    angrywolf_ids.add(Integer.valueOf(w.getEntityId()));
+    			}
+    			if(pup) {
+    			    w.setAge(-24000);
+    			}
     		}
     	}
     }
@@ -81,6 +93,8 @@ public class AngryWolvesEntityListener extends EntityListener {
     public void onCreatureSpawn(CreatureSpawnEvent event) {
     	if(event.isCancelled())
     		return;
+    	if(doing_spawn)
+    	    return;
     	Location loc = event.getLocation();
     	boolean did_it = false;
     	CreatureType ct = event.getCreatureType();
@@ -95,15 +109,18 @@ public class AngryWolvesEntityListener extends EntityListener {
     		cfg = plugin.findByLocation(loc);
     		//plugin.log.info("mob: " + cfg);
     		int rate = cfg.getMobToWolfRate(ct, plugin.isFullMoon(loc.getWorld()));
+    		int rate2 = cfg.mobToWildWolfRate();
     		if(plugin.verbose) AngryWolves.log.info("mobrate(" + ct + ")=" + rate);
     		/* If so, percentage is relative to population of monsters (percent * 10% is chance we grab */
-    		if((rate > 0) && (rnd.nextInt(1000) < rate) && checkLimit()) {
+    		int rndval = rnd.nextInt(1000);
+    		if(((rate+rate2) > 0)  && (rndval < (rate+rate2)) && checkLimit()) {
+    		    boolean angry = (rndval < rate);
     			boolean ignore_terrain = cfg.getMobToWolfTerrainIgnore();	/* See if we're ignoring terrain */
         		Block b = loc.getBlock();
         		Biome bio = b.getBiome();
-        		if(plugin.verbose) AngryWolves.log.info("biome=" + bio + ", ignore=" + ignore_terrain);
+        		if(plugin.verbose) AngryWolves.log.info("biome=" + bio + ", ignore=" + ignore_terrain + ", angry=" + angry);
         		/* See if hellhound - only hellhounds substitute in Nether, use hellhound_rate elsewhere */
-        		boolean do_hellhound = (bio.equals(Biome.HELL) || (rnd.nextInt(100) <= cfg.getHellhoundRate()));
+        		boolean do_hellhound = angry && ((bio.equals(Biome.HELL) || (rnd.nextInt(100) <= cfg.getHellhoundRate())));
         		/* If valid biome for wolf (or hellhound) */
         		if(ignore_terrain || bio.equals(Biome.FOREST) || bio.equals(Biome.TAIGA) || bio.equals(Biome.SEASONAL_FOREST) ||
         				bio.equals(Biome.HELL)) {
@@ -125,6 +142,7 @@ public class AngryWolvesEntityListener extends EntityListener {
     				DoSpawn ds = new DoSpawn();
     				ds.loc = loc;
     				ds.is_hellhound = do_hellhound;
+    				ds.angry = angry;
     				ds.health = do_hellhound?plugin.getHellhoundHealth():plugin.getAngryWolfHealth();
     				plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, ds);
     				did_it = true;
@@ -316,8 +334,29 @@ public class AngryWolvesEntityListener extends EntityListener {
     @Override
     public void onEntityDeath(EntityDeathEvent event) {
         Entity e = event.getEntity();
-        if(!(e instanceof Wolf))    /* Don't care about non-wolves */
+        if(!(e instanceof Wolf)) {    /* Don't care about non-wolves */
+            if(e instanceof Sheep) {    /* Sheep killed?  See if wolf did it */
+                AngryWolves.BaseConfig cfg = plugin.findByLocation(e.getLocation());    /* Get our configuration for location */
+                int rate = cfg.getPupOnSheepKillRate();
+                if(rate > 0) {
+                    EntityDamageEvent ede = e.getLastDamageCause();
+                    if(ede instanceof EntityDamageByEntityEvent) {
+                        EntityDamageByEntityEvent edee = (EntityDamageByEntityEvent)ede;
+                        Entity damager = edee.getDamager();
+                        if(damager instanceof Wolf) {   /* Killed by a wolf? */
+                            if((rate < rnd.nextInt(100)) && checkLimit()) {
+                                if(plugin.verbose) AngryWolves.log.info("Spawning pup");
+                                DoSpawn ds = new DoSpawn();
+                                ds.loc = e.getLocation();
+                                ds.pup = true;
+                                plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, ds, 40);
+                            }
+                        }
+                    }
+                }
+            }
             return;
+        }
         Wolf w = (Wolf)e;
         /* Forget the dead hellhound */
         boolean was_hellhound = hellhound_ids.remove(e.getEntityId()) != null;

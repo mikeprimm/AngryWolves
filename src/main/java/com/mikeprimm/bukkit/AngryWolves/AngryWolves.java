@@ -46,6 +46,7 @@ public class AngryWolves extends JavaPlugin {
     public static final String CONFIG_SPAWNMSG_DEFAULT = "spawnmsg";
     public static final String CONFIG_SPAWN_ANGERRATE = "spawn-anger-rate";
     public static final String CONFIG_MOBTOWOLF_RATE = "mob-to-wolf-rate";
+    public static final String CONFIG_MOBTOWILDWOLF_RATE = "mob-to-wildwolf-rate";
     public static final String CONFIG_FULLMOON_MOBTOWOLF_RATE = "fullmoon-mob-to-wolf-rate";
     public static final String CONFIG_CREEPERTOWOLF_RATE = "creeper-to-wolf-rate";
     public static final String CONFIG_ZOMBIETOWOLF_RATE = "zombie-to-wolf-rate";
@@ -78,6 +79,7 @@ public class AngryWolves extends JavaPlugin {
     public static final String CONFIG_HELLHOUND_FIREBALL_RATE = "hellhound-fireball-rate";
     public static final String CONFIG_HELLHOUND_FIREBALL_RANGE = "hellhound-fireball-range";
     public static final String CONFIG_HELLHOUND_FIREBALL_INCENDIARY = "hellhound-fireball-incendiary";
+    public static final String CONFIG_PUPS_ON_SHEEP_KILL_RATE = "pup-on-sheep-kill-rate";
     
     public static final int SPAWN_ANGERRATE_DEFAULT = 0;
     public static final int MOBTOWOLF_RATE_DEFAULT = 10;
@@ -99,6 +101,7 @@ public class AngryWolves extends JavaPlugin {
     public static abstract class BaseConfig {
 		String spawnmsg;
     	Integer mobtowolf_rate;
+        Integer mobtowildwolf_rate;
     	Integer fullmoon_mobtowolf_rate;
     	Integer creepertowolf_rate;
     	Integer zombietowolf_rate;
@@ -127,6 +130,8 @@ public class AngryWolves extends JavaPlugin {
        	Integer hellhound_fireball_rate;
         Integer hellhound_fireball_range;
         Boolean hellhound_fireball_incendiary;
+        Integer pup_on_kill_rate;
+        
     	abstract BaseConfig getParent();
     	
     	public String getSpawnMsg() {
@@ -203,6 +208,17 @@ public class AngryWolves extends JavaPlugin {
     			return MOBTOWOLF_RATE_DEFAULT;    		
     	}
 
+        public int mobToWildWolfRate() {
+            if(mobtowildwolf_rate != null) {
+                return mobtowildwolf_rate.intValue();
+            }
+            BaseConfig p = getParent();
+            if(p != null)
+                return p.mobToWildWolfRate();
+            else
+                return 0;          
+        }
+
     	private int mobToWolfRateMoon() {
     		if(fullmoon_mobtowolf_rate != null) {
     			return fullmoon_mobtowolf_rate.intValue();
@@ -224,6 +240,17 @@ public class AngryWolves extends JavaPlugin {
     		else
     			return SPAWN_ANGERRATE_DEFAULT;    		
     	}
+
+        public int getPupOnSheepKillRate() {
+            if(pup_on_kill_rate != null) {
+                return pup_on_kill_rate.intValue();
+            }
+            BaseConfig p = getParent();
+            if(p != null)
+                return p.getPupOnSheepKillRate();
+            else
+                return 0;         
+        }
 
     	public int getSpawnAngerRateMoon() {
        		if(angerrate_moon != null) {
@@ -468,10 +495,20 @@ public class AngryWolves extends JavaPlugin {
     			mobtowolf_rate = Integer.valueOf(mobtowolf);
     		}
 
+            if(n.getProperty(CONFIG_MOBTOWILDWOLF_RATE) != null) {
+                int mobtowolf = n.getInt(CONFIG_MOBTOWILDWOLF_RATE, 0);
+                mobtowildwolf_rate = Integer.valueOf(mobtowolf);
+            }
+
     		if(n.getProperty(CONFIG_FULLMOON_MOBTOWOLF_RATE) != null) {
     			int mobtowolf = n.getInt(CONFIG_FULLMOON_MOBTOWOLF_RATE, -1);
     			fullmoon_mobtowolf_rate = Integer.valueOf(mobtowolf);
     		}
+
+            if(n.getProperty(CONFIG_HELLHOUND_RATE) != null) {
+                int puprate = n.getInt(CONFIG_PUPS_ON_SHEEP_KILL_RATE, 0);
+                pup_on_kill_rate = Integer.valueOf(puprate);
+            }
 
     		if(n.getProperty(CONFIG_HELLHOUND_RATE) != null) {
     			int hellhoundrate = n.getInt(CONFIG_HELLHOUND_RATE, 0);
@@ -909,6 +946,10 @@ public class AngryWolves extends JavaPlugin {
     			fos.println("# mob-to-spawn-based spawns are normally limited to spawns occuring in valid biomes for wolves, as well as over valid wolf spawn terrain (grass)");
     			fos.println("# " + CONFIG_MOBTOWOLF_IGNORE_TERRAIN + " can be set to 'true' to disable biome and terrain restrictions");
     			fos.println("# " + CONFIG_MOBTOWOLF_IGNORE_TERRAIN + ": true");
+                fos.println("# (Optional) Make non-angry (wild) wolf spawns from mob spawns, at given rate (in TENTHS of a percent) - make wolves more common");
+                fos.println(CONFIG_MOBTOWILDWOLF_RATE + ": 10");
+                fos.println("# (Optional) Spawn wolf pup when wolf kills sheep (rate in percent)");
+                fos.println("# " + CONFIG_PUPS_ON_SHEEP_KILL_RATE + ": 10");
     			fos.println("# If defined, can also have a 'full moon night' one out of every days-per-moon");
     			fos.println("# During this, anger-rate-fullmoon percent of non-tame wolves go angry");
     			fos.println("# At the end of the full moon, fullmoon-stay-angry-rate percent of angry wolves stay angry");
