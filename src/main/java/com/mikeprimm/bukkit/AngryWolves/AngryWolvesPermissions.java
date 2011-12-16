@@ -24,12 +24,16 @@ public class AngryWolvesPermissions {
 	public static void initialize(Server server) {
 		Plugin perm = server.getPluginManager().getPlugin("Permissions");
 		if(perm != null) {
-			our_handler = Handler.PERMISSIONS;
-			permissions_plugin = (Permissions)perm;
-			handler = permissions_plugin.getHandler();
+		    try {
+		        permissions_plugin = (Permissions)perm;
+		        handler = permissions_plugin.getHandler();
+                our_handler = Handler.PERMISSIONS;
+		        AngryWolves.log.info("[AngryWolves] Using Permissions " + permissions_plugin.getDescription().getVersion() + " for access control");
+		    } catch (NoClassDefFoundError ncdf) {
+		    }
 		}
-		else {
-			our_handler = Handler.NONE;
+		if(our_handler == Handler.NONE) {
+            AngryWolves.log.info("[AngryWolves] Using Bukkit API for access control");
 		}
 	}
 	/* Fetch specific permission for given player */

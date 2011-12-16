@@ -1,6 +1,6 @@
 name: AngryWolves
 main: com.mikeprimm.bukkit.AngryWolves.AngryWolves
-version: 0.8.7
+version: "${project.version}"
 author: mikeprimm
 softdep: [ Permissions ]
 
