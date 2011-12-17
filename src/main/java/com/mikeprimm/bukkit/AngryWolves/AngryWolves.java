@@ -819,14 +819,13 @@ public class AngryWolves extends JavaPlugin {
     				pws.moon_is_full = false; /* Not us */
     			}
     			else {    				
-    				long t = world.getTime();	/* Get time of day */
-    				if(t < pws.last_time) {	/* Day ended? */
-    					pws.daycounter++;
-    				}
+    				long t = world.getFullTime();	/* Get time of day */
+    				pws.daycounter = (int)(t / 24000);
     				pws.last_time = t;
     				
     				long dom = pws.daycounter % dpm;	/* Compute day of "month" */
-    				if((dom == (dpm-1)) && ((t % 24000) > 12500)) {
+                    if(verbose) log.info("dayofmonth=" + dom);
+    				if((dom == 0) && ((t % 24000) > 12500)) {
     					if(pws.moon_is_full == false) {
     						pws.moon_is_full = true;
     						if(verbose) log.info("Starting full moon in " + world.getName());
@@ -950,10 +949,10 @@ public class AngryWolves extends JavaPlugin {
                 fos.println(CONFIG_MOBTOWILDWOLF_RATE + ": 10");
                 fos.println("# (Optional) Spawn wolf pup when wolf kills sheep (rate in percent)");
                 fos.println("# " + CONFIG_PUPS_ON_SHEEP_KILL_RATE + ": 10");
-    			fos.println("# If defined, can also have a 'full moon night' one out of every days-per-moon");
+    			fos.println("# If defined, can also have a 'full moon night' one out of every days-per-moon (if 8, will match 1.0.0+ moon phases)");
     			fos.println("# During this, anger-rate-fullmoon percent of non-tame wolves go angry");
     			fos.println("# At the end of the full moon, fullmoon-stay-angry-rate percent of angry wolves stay angry");
-    			fos.println(CONFIG_DAYSPERMOON + ": 28");
+    			fos.println(CONFIG_DAYSPERMOON + ": 8");
     			fos.println(CONFIG_ANGERRATE_MOON +": 25");
     			fos.println(CONFIG_FULLMOONMSG + ": The wolves are baying at the full moon ...");
     			fos.println(CONFIG_FULLMOON_STAY_ANGRY_RATE + ": 0");
