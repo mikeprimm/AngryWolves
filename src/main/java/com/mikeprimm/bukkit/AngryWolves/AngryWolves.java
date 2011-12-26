@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.logging.Logger;
 
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.CreatureType;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Wolf;
@@ -13,8 +15,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.event.Event;
 import org.bukkit.event.Event.Priority;
-import org.bukkit.util.config.Configuration;
-import org.bukkit.util.config.ConfigurationNode;
 import org.bukkit.Location;
 import org.bukkit.World;
 import java.io.File;
@@ -495,8 +495,8 @@ public class AngryWolves extends JavaPlugin {
                 return null;	/* Use wolf loot */          
         }   
 
-    	void loadConfiguration(ConfigurationNode n) {
-    		if(n.getProperty(CONFIG_SPAWN_ANGERRATE) != null) {
+    	void loadConfiguration(ConfigurationSection n) {
+    		if(n.get(CONFIG_SPAWN_ANGERRATE) != null) {
     			int spawn_ang = n.getInt(CONFIG_SPAWN_ANGERRATE, 0);
     			if(spawn_ang < 0) spawn_ang = 0;
     			if(spawn_ang > 100) spawn_ang = 100;
@@ -507,76 +507,76 @@ public class AngryWolves extends JavaPlugin {
     			spawnmsg = m;
     		}
     		
-    		if(n.getProperty(CONFIG_MOBTOWOLF_RATE) != null) {
+    		if(n.get(CONFIG_MOBTOWOLF_RATE) != null) {
     			int mobtowolf = n.getInt(CONFIG_MOBTOWOLF_RATE, 0);
     			mobtowolf_rate = Integer.valueOf(mobtowolf);
     		}
 
-            if(n.getProperty(CONFIG_MOBTOWILDWOLF_RATE) != null) {
+            if(n.get(CONFIG_MOBTOWILDWOLF_RATE) != null) {
                 int mobtowolf = n.getInt(CONFIG_MOBTOWILDWOLF_RATE, 0);
                 mobtowildwolf_rate = Integer.valueOf(mobtowolf);
             }
 
-    		if(n.getProperty(CONFIG_FULLMOON_MOBTOWOLF_RATE) != null) {
+    		if(n.get(CONFIG_FULLMOON_MOBTOWOLF_RATE) != null) {
     			int mobtowolf = n.getInt(CONFIG_FULLMOON_MOBTOWOLF_RATE, -1);
     			fullmoon_mobtowolf_rate = Integer.valueOf(mobtowolf);
     		}
 
-            if(n.getProperty(CONFIG_HELLHOUND_RATE) != null) {
+            if(n.get(CONFIG_HELLHOUND_RATE) != null) {
                 int puprate = n.getInt(CONFIG_PUPS_ON_SHEEP_KILL_RATE, 0);
                 pup_on_kill_rate = Integer.valueOf(puprate);
             }
 
-    		if(n.getProperty(CONFIG_HELLHOUND_RATE) != null) {
+    		if(n.get(CONFIG_HELLHOUND_RATE) != null) {
     			int hellhoundrate = n.getInt(CONFIG_HELLHOUND_RATE, 0);
     			hellhound_rate = Integer.valueOf(hellhoundrate);
     		}
 
-    		if(n.getProperty(CONFIG_CREEPERTOWOLF_RATE) != null) {
+    		if(n.get(CONFIG_CREEPERTOWOLF_RATE) != null) {
     			int mobrate = n.getInt(CONFIG_CREEPERTOWOLF_RATE, 0);
     			creepertowolf_rate = Integer.valueOf(mobrate);
     		}
 
-    		if(n.getProperty(CONFIG_SKELETONTOWOLF_RATE) != null) {
+    		if(n.get(CONFIG_SKELETONTOWOLF_RATE) != null) {
     			int mobrate = n.getInt(CONFIG_SKELETONTOWOLF_RATE, 0);
     			skeletontowolf_rate = Integer.valueOf(mobrate);
     		}
 
-    		if(n.getProperty(CONFIG_SPIDERTOWOLF_RATE) != null) {
+    		if(n.get(CONFIG_SPIDERTOWOLF_RATE) != null) {
     			int mobrate = n.getInt(CONFIG_SPIDERTOWOLF_RATE, 0);
     			spidertowolf_rate = Integer.valueOf(mobrate);
     		}
 
-    		if(n.getProperty(CONFIG_ZOMBIETOWOLF_RATE) != null) {
+    		if(n.get(CONFIG_ZOMBIETOWOLF_RATE) != null) {
     			int mobrate = n.getInt(CONFIG_ZOMBIETOWOLF_RATE, 0);
     			zombietowolf_rate = Integer.valueOf(mobrate);
     		}
 
-    		if(n.getProperty(CONFIG_PIGZOMBIETOWOLF_RATE) != null) {
+    		if(n.get(CONFIG_PIGZOMBIETOWOLF_RATE) != null) {
     			int mobrate = n.getInt(CONFIG_PIGZOMBIETOWOLF_RATE, 0);
     			pigzombietowolf_rate = Integer.valueOf(mobrate);
     		}
 
-    		if(n.getProperty(CONFIG_SPAWNMSGRADIUS) != null) {
+    		if(n.get(CONFIG_SPAWNMSGRADIUS) != null) {
     			int smrad = n.getInt(CONFIG_SPAWNMSGRADIUS, 0);
     			spawnmsgradius = Integer.valueOf(smrad);
     		}
     		
-    		if(n.getProperty(CONFIG_ANGERRATE_MOON) != null) {
+    		if(n.get(CONFIG_ANGERRATE_MOON) != null) {
     			int spawn_ang = n.getInt(CONFIG_ANGERRATE_MOON, 0);
     			if(spawn_ang < 0) spawn_ang = 0;
     			if(spawn_ang > 100) spawn_ang = 100;
     			angerrate_moon = Integer.valueOf(spawn_ang);
     		}
 
-    		if(n.getProperty(CONFIG_FULLMOON_STAY_ANGRY_RATE) != null) {
+    		if(n.get(CONFIG_FULLMOON_STAY_ANGRY_RATE) != null) {
     			int stayangry = n.getInt(CONFIG_FULLMOON_STAY_ANGRY_RATE, FULLMOON_STAYANGRYRATE_DEFAULT);
     			if(stayangry < 0) stayangry = 0;
     			if(stayangry > 100) stayangry = 100;
     			stayangryrate_moon = Integer.valueOf(stayangry);
     		}
 
-   			if(n.getProperty(CONFIG_WOLFINSHEEP_RATE) != null) {
+   			if(n.get(CONFIG_WOLFINSHEEP_RATE) != null) {
    		        wolfinsheep_rate = n.getInt(CONFIG_WOLFINSHEEP_RATE, 0);
    			}
    			
@@ -590,48 +590,50 @@ public class AngryWolves extends JavaPlugin {
    				fullmoonmsg = m;
    			}
 
-   			if(n.getProperty(CONFIG_WOLFFRIEND) != null) {
+   			if(n.get(CONFIG_WOLFFRIEND) != null) {
    				wolffriend = n.getBoolean(CONFIG_WOLFFRIEND, false);
    			}
 
-            if(n.getProperty(CONFIG_HELLHOUND_FIREBALL_RATE) != null) {
+            if(n.get(CONFIG_HELLHOUND_FIREBALL_RATE) != null) {
                 hellhound_fireball_rate = n.getInt(CONFIG_HELLHOUND_FIREBALL_RATE, 0);
             }
-            if(n.getProperty(CONFIG_HELLHOUND_FIREBALL_RANGE) != null) {
+            if(n.get(CONFIG_HELLHOUND_FIREBALL_RANGE) != null) {
                 hellhound_fireball_range = n.getInt(CONFIG_HELLHOUND_FIREBALL_RANGE, 10);
             }
-            if(n.getProperty(CONFIG_HELLHOUND_FIREBALL_INCENDIARY) != null) {
+            if(n.get(CONFIG_HELLHOUND_FIREBALL_INCENDIARY) != null) {
                 hellhound_fireball_incendiary = n.getBoolean(CONFIG_HELLHOUND_FIREBALL_INCENDIARY, false);
             }
 
-   			if(n.getProperty(CONFIG_MOBTOWOLF_IGNORE_TERRAIN) != null) {
+   			if(n.get(CONFIG_MOBTOWOLF_IGNORE_TERRAIN) != null) {
    				ignore_terrain = n.getBoolean(CONFIG_MOBTOWOLF_IGNORE_TERRAIN, false);
    			}
-   			if(n.getProperty(CONFIG_WOLFLOOT_RATE) != null) {
+   			if(n.get(CONFIG_WOLFLOOT_RATE) != null) {
    			    wolfloot_rate = n.getInt(CONFIG_WOLFLOOT_RATE, 0);
    			}
-   			if(n.getProperty(CONFIG_WOLFLOOT) != null) {
-   			    wolfloot = n.getIntList(CONFIG_WOLFLOOT, Collections.singletonList(Integer.valueOf(334)));
+   			if(n.get(CONFIG_WOLFLOOT) != null) {
+   			    wolfloot = n.getIntegerList(CONFIG_WOLFLOOT);
+   			    if(wolfloot == null)
+   			        wolfloot = Collections.singletonList(Integer.valueOf(334));
    			}
-            if(n.getProperty(CONFIG_WOLFXP) != null) {
+            if(n.get(CONFIG_WOLFXP) != null) {
                 wolfxp = n.getInt(CONFIG_WOLFXP, 0);
             }
-   			if(n.getProperty(CONFIG_ANGRYWOLFLOOT_RATE) != null) {
+   			if(n.get(CONFIG_ANGRYWOLFLOOT_RATE) != null) {
    			    angrywolfloot_rate = n.getInt(CONFIG_ANGRYWOLFLOOT_RATE, -1);
    			}
-   			if(n.getProperty(CONFIG_ANGRYWOLFLOOT) != null) {
-   			    angrywolfloot = n.getIntList(CONFIG_ANGRYWOLFLOOT, null);
+   			if(n.get(CONFIG_ANGRYWOLFLOOT) != null) {
+   			    angrywolfloot = n.getIntegerList(CONFIG_ANGRYWOLFLOOT);
    			}
-            if(n.getProperty(CONFIG_ANGRYWOLFXP) != null) {
+            if(n.get(CONFIG_ANGRYWOLFXP) != null) {
                 angrywolfxp = n.getInt(CONFIG_ANGRYWOLFXP, 0);
             }
-   			if(n.getProperty(CONFIG_HELLHOUNDLOOT_RATE) != null) {
+   			if(n.get(CONFIG_HELLHOUNDLOOT_RATE) != null) {
    			    hellhoundloot_rate = n.getInt(CONFIG_HELLHOUNDLOOT_RATE, -1);
    			}
-   			if(n.getProperty(CONFIG_HELLHOUNDLOOT) != null) {
-   			    hellhoundloot = n.getIntList(CONFIG_HELLHOUNDLOOT, null);
+   			if(n.get(CONFIG_HELLHOUNDLOOT) != null) {
+   			    hellhoundloot = n.getIntegerList(CONFIG_HELLHOUNDLOOT);
    			}
-            if(n.getProperty(CONFIG_HELLHOUNDXP) != null) {
+            if(n.get(CONFIG_HELLHOUNDXP) != null) {
                 hellhoundxp = n.getInt(CONFIG_HELLHOUNDXP, 0);
             }
     	}
@@ -670,10 +672,10 @@ public class AngryWolves extends JavaPlugin {
        			return DAYSPERMOON_DEFAULT;
        	}
        	
-    	void loadConfiguration(ConfigurationNode n) {
+    	void loadConfiguration(ConfigurationSection n) {
     		super.loadConfiguration(n);	/* Load base attributes */
 
-    		if(n.getProperty(CONFIG_DAYSPERMOON) != null) {
+    		if(n.get(CONFIG_DAYSPERMOON) != null) {
     			int dpm = n.getInt(CONFIG_DAYSPERMOON, 0);
     			days_per_moon = Integer.valueOf(dpm);
     		}
@@ -715,16 +717,17 @@ public class AngryWolves extends JavaPlugin {
     		areaname = n;
     	}
     	
-    	void loadConfiguration(ConfigurationNode n) {
+    	void loadConfiguration(ConfigurationSection n) {
     		super.loadConfiguration(n);	/* Load base attributes */
     		/* Get coordinate list */
-            List<ConfigurationNode> cl = n.getNodeList("coords", null);
+            List cl = n.getList("coords", null);
             if(cl != null) {
             	int len = cl.size();	/* Get number of elements in list */
             	x = new double[len];
             	z = new double[len];
             	int i = 0;
-            	for(ConfigurationNode coord : cl) {	/* Loop through coords */
+            	for(Object coordobj : cl) {	/* Loop through coords */
+            	    ConfigurationSection coord = (ConfigurationSection)coordobj;
             		x[i] = coord.getDouble("x", 0.0);
             		z[i] = coord.getDouble("z", 0.0);	/* Read coordinates into array */
             		if(i > 0) {	/* Compute bounding box */
@@ -927,116 +930,17 @@ public class AngryWolves extends JavaPlugin {
         getServer().getScheduler().scheduleSyncRepeatingTask(this, new CheckForMoon(), 0, 20*30);
     }
     
-    private void readConfig() {    	
+    private void readConfig() {
     	File configdir = getDataFolder();	/* Get our data folder */
-    	if(configdir.exists() == false) {	/* Not yet defined? */
-    		configdir.mkdirs();				/* Create it */
+    	File oldconfig = new File(configdir, "AngryWolves.yml");
+    	if(oldconfig.exists()) {
+    	    File newcfg = new File(configdir, "config.yml");
+    	    oldconfig.renameTo(newcfg);
     	}
-    	File configfile = new File(configdir, "AngryWolves.yml");	/* Our YML file */
-    	Configuration cfg = new Configuration(configfile);
-    	if(configfile.exists() == false) {	/* Not defined yet? */
-    		PrintWriter fos = null;
-    		try {
-    			fos = new PrintWriter(new FileWriter(configfile));
-    			fos.println("# Configuration file for AngryWolves);");
-    			fos.println("#   spawn-anger-rate is percentage of normal wolf spawns that spawn angry");
-    			fos.println("# If undefined, spawn-anger-rate defaults to 0");
-    			fos.println(CONFIG_SPAWN_ANGERRATE + ": 5");
-    			fos.println("#   hellhound-rate is percentage of angry wolfs that are hellhounds (flaming-fireproof-wolves)");
-    			fos.println("# If undefined, hellhound-rate defaults to 10.  In Nether, 100% of angry wolves are hellhounds.");
-    			fos.println(CONFIG_HELLHOUND_RATE + ": 10");
-    			fos.println("#   mob-to-wolf-rate is the TENTHS of a percent of monster spawns that are replaced with angry wolves");
-    			fos.println("#   spider-to-wolf-rate is the TENTHS of a percent of spider spawns that are replaced with angry wolves");
-    			fos.println("#   zombie-to-wolf-rate is the TENTHS of a percent of zombie spawns that are replaced with angry wolves");
-    			fos.println("#   skeleton-to-wolf-rate is the TENTHS of a percent of skeleton spawns that are replaced with angry wolves");
-    			fos.println("#   creeper-to-wolf-rate is the TENTHS of a percent of creeper spawns that are replaced with angry wolves");
-    			fos.println("#   pig-zombie-to-wolf-rate is the TENTHS of a percent of pig-zombie spawns that are replaced with angry wolves");
-    			fos.println("#   note: if monster type specific rate is defined, it supercedes the mob-to-wolf-rate for that monster type");
-                fos.println("# If undefined, mob-to-wolf-rate defaults to 10, others are null");
-    			fos.println(CONFIG_MOBTOWOLF_RATE + ": 10");
-    			fos.println("# " + CONFIG_SPIDERTOWOLF_RATE + ": 20");
-    			fos.println("# " + CONFIG_ZOMBIETOWOLF_RATE + ": 0");
-    			fos.println("# " + CONFIG_SKELETONTOWOLF_RATE + ": 5");
-    			fos.println("# " + CONFIG_CREEPERTOWOLF_RATE + ": 1000");
-    			fos.println("# " + CONFIG_PIGZOMBIETOWOLF_RATE + ": 20");
-    			fos.println("# mob-to-spawn-based spawns are normally limited to spawns occuring in valid biomes for wolves, as well as over valid wolf spawn terrain (grass)");
-    			fos.println("# " + CONFIG_MOBTOWOLF_IGNORE_TERRAIN + " can be set to 'true' to disable biome and terrain restrictions");
-    			fos.println("# " + CONFIG_MOBTOWOLF_IGNORE_TERRAIN + ": true");
-                fos.println("# (Optional) Make non-angry (wild) wolf spawns from mob spawns, at given rate (in TENTHS of a percent) - make wolves more common");
-                fos.println(CONFIG_MOBTOWILDWOLF_RATE + ": 10");
-                fos.println("# (Optional) Spawn wolf pup when wolf kills sheep (rate in percent)");
-                fos.println("# " + CONFIG_PUPS_ON_SHEEP_KILL_RATE + ": 10");
-    			fos.println("# If defined, can also have a 'full moon night' one out of every days-per-moon (if 8, will match 1.0.0+ moon phases)");
-    			fos.println("# During this, anger-rate-fullmoon percent of non-tame wolves go angry");
-    			fos.println("# At the end of the full moon, fullmoon-stay-angry-rate percent of angry wolves stay angry");
-    			fos.println(CONFIG_DAYSPERMOON + ": 8");
-    			fos.println(CONFIG_ANGERRATE_MOON +": 25");
-    			fos.println(CONFIG_FULLMOONMSG + ": \"&4The wolves are baying at the full moon ...\"");
-    			fos.println(CONFIG_FULLMOON_STAY_ANGRY_RATE + ": 0");
-    			fos.println("# Optional - mob-to-wolf-rate to apply during full moon (if set - otherwise, same rate used)");
-    			fos.println("# " + CONFIG_FULLMOON_MOBTOWOLF_RATE + ": 50");
-    			fos.println("# Optional spawn message");
-    			fos.println("# spawnmsg: There's a bad moon on the rise...");
-    			fos.println("# Also, optional spawn message radius - limits message to only players within given number of blocks of spawn");
-    			fos.println("# " + CONFIG_SPAWNMSGRADIUS + ": 50");
-    			fos.println("# Wolf-in-sheeps-clothing rate : in 10ths of a percent");
-    			fos.println(CONFIG_WOLFINSHEEP_RATE + ": 0");
-    			fos.println(CONFIG_WOLFINSHEEP_MSG + ": \"Oh, no! A wolf in sheep's clothing!\"");
-    			fos.println("# Optional - enable 'wolf-friends' : players with the 'angrywolves.wolf-friend' privilege will not be targetted by angry wolves!");
-    			fos.println("# " + CONFIG_WOLFFRIEND + ": true");
-    			fos.println("# Optional - enable wolf loot - wolf-loot-rate is percent change of drop, wolf-loot is list of item ids to select from (1 randomly picked), wolf-xp is experience orbs dropped");
-    			fos.println("# " + CONFIG_WOLFLOOT_RATE + ": 20");
-    			fos.println("# " + CONFIG_WOLFLOOT + ": [ 334, 352, 319 ]");
-                fos.println("# " + CONFIG_WOLFXP + ": 5");
-    			fos.println("# Optional - enable different loot for angry wolves (if not defined, wolf loot settings are used)");
-    			fos.println("# " + CONFIG_ANGRYWOLFLOOT_RATE + ": 70");
-    			fos.println("# " + CONFIG_ANGRYWOLFLOOT + ": [ 334, 352, 319 ]");
-                fos.println("# " + CONFIG_ANGRYWOLFXP + ": 5");
-    			fos.println("# Optional - enable different loot for hellhounds (if not defined, wolf loot settings are used)");
-    			fos.println("# " + CONFIG_HELLHOUNDLOOT_RATE + ": 90");
-    			fos.println("# " + CONFIG_HELLHOUNDLOOT + ": [ 334, 352, 319 ]");
-    			fos.println("# " + CONFIG_HELLHOUNDXP + ": 10");
-    			fos.println("# Population limit for Angry Wolves and Hellhounds (combined for server)");
-    			fos.println(CONFIG_ANYGYWOLF_POPLIMIT + ": 200");
-    			fos.println("# Angry Wolf initial health - normal wild wolves are 8, tamed wolves are 20");
-    			fos.println(CONFIG_ANGRYWOLF_HEALTH + ": 8");
-    			fos.println("# Hellhound initial health - normal wild wolves are 8, tamed wolves are 20");
-    			fos.println(CONFIG_HELLHOUND_HEALTH + ": 10");
-    			fos.println("# Hellhound damage scale - multiplier for general damage to hellhounds (less that 1.0 reduces damage done to them)");
-    			fos.println(CONFIG_HELLHOUND_DAMAGESCALE + ": 0.5");
-    			fos.println("# (optional) have hellhounds shoot fireballs!  Control range, rate (seconds between shots), and whether they cause fires");
-    			fos.println("# " + CONFIG_HELLHOUND_FIREBALL_RANGE + ": 10");
-                fos.println("# " + CONFIG_HELLHOUND_FIREBALL_RATE + ": 3");
-                fos.println("#hellhound-fireball-incendiary: false");
-    			fos.println("# For multi-world specific rates, fill in rate under section for each world");
-    			fos.println("worlds:");
-    			fos.println("#  - name: world");
-    			fos.println("#    " + CONFIG_SPAWN_ANGERRATE + ": 10");
-    			fos.println("#    " + CONFIG_MOBTOWOLF_RATE + ": 0");
-    			fos.println("#    " + CONFIG_DAYSPERMOON + ": 0");
-    			fos.println("#  - name: transylvania");
-    			fos.println("#    " + CONFIG_SPAWN_ANGERRATE + ": 90");
-    			fos.println("#    " + CONFIG_MOBTOWOLF_RATE + ": 100");
-    			fos.println("#    spawnmsg: Something evil has entered the world...");
-    			fos.println("# Optional - for special settings limited to an area on one world");
-    			fos.println("#  'coords' define the area, as a list of two or more coordinate values (each of which has an x and z attribute).");
-    			fos.println("areas:");
-    			fos.println("#  - name: Area51");
-    			fos.println("#    worldname: world");
-    			fos.println("#    coords:");
-    			fos.println("#      - x: 200");
-    			fos.println("#        z: 40");
-    			fos.println("#      - x: 60");
-    			fos.println("#        z: 100");
-       			fos.println("#    " + CONFIG_SPAWN_ANGERRATE + ": 100");
-    			fos.println("#    " + CONFIG_MOBTOWOLF_RATE + ": 100");
-    			fos.close();
-    		} catch (IOException iox) {
-    			log.severe("ERROR writing default configuration for AngryWolves");
-    			return;
-    		}
-    	}
-    	cfg.load();		/* Load it */
+        /* Load configuration */
+        FileConfiguration cfg = getConfig();
+        cfg.options().copyDefaults(true);   /* Load defaults, if needed */
+        this.saveConfig();  /* Save updates, if needed */
     	boolean dirty = false;
 
     	/* Load default world-level configuration */
@@ -1053,9 +957,10 @@ public class AngryWolves extends JavaPlugin {
     	if(angrywolf_health < 1) angrywolf_health = 1;
     	
     	/* Now, process world-specific overrides */
-        List<ConfigurationNode> w = cfg.getNodeList("worlds", null);
+        List w = cfg.getList("worlds");
         if(w != null) {
-        	for(ConfigurationNode world : w) {
+        	for(Object worldobj : w) {
+        	    ConfigurationSection world = (ConfigurationSection)worldobj;
         		String wname = world.getString("name");	/* Get name */
         		if(wname == null)
         			continue;
@@ -1068,9 +973,10 @@ public class AngryWolves extends JavaPlugin {
         	}
         }
         /* Now, process area-specific overrides */
-        w = cfg.getNodeList("areas", null);
+        w = cfg.getList("areas");
         if(w != null) {
-        	for(ConfigurationNode area : w) {
+        	for(Object areaobj : w) {
+        	    ConfigurationSection area = (ConfigurationSection)areaobj;
         		String aname = area.getString("name");	/* Get name */
         		if(aname == null)
         			continue;
@@ -1090,7 +996,7 @@ public class AngryWolves extends JavaPlugin {
         }
 
         if(dirty) {	/* If updated, save it */
-        	cfg.save();
+        	this.saveConfig();
         }
     }
 
