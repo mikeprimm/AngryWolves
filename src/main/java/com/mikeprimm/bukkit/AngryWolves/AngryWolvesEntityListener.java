@@ -118,15 +118,17 @@ public class AngryWolvesEntityListener extends EntityListener {
     			boolean ignore_terrain = cfg.getMobToWolfTerrainIgnore();	/* See if we're ignoring terrain */
         		Block b = loc.getBlock();
         		Biome bio = b.getBiome();
-        		if(plugin.verbose) AngryWolves.log.info("biome=" + bio + ", ignore=" + ignore_terrain + ", angry=" + angry);
         		/* See if hellhound - only hellhounds substitute in Nether, use hellhound_rate elsewhere */
         		boolean do_hellhound = angry && ((bio.equals(Biome.HELL) || (rnd.nextInt(100) <= cfg.getHellhoundRate())));
+
+                if(plugin.verbose) AngryWolves.log.info("biome=" + bio + ", ignore=" + ignore_terrain + ", angry=" + angry + ", hellhound=" + do_hellhound);
         		/* If valid biome for wolf (or hellhound) */
         		if(ignore_terrain || bio.equals(Biome.FOREST) || bio.equals(Biome.TAIGA) || bio.equals(Biome.SEASONAL_FOREST) ||
         				bio.equals(Biome.HELL)) {
     				/* If hellhound in hell, we're good */
     				if(bio.equals(Biome.HELL)) {
-    					
+    				    if(!do_hellhound)   /* Only angry hellhounds in nether */
+    				        return;
     				}
     				else if(!ignore_terrain) {
         				while((b != null) && (b.getType().equals(Material.AIR))) {
@@ -146,7 +148,7 @@ public class AngryWolvesEntityListener extends EntityListener {
     				ds.health = do_hellhound?plugin.getHellhoundHealth():plugin.getAngryWolfHealth();
     				plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, ds);
     				did_it = true;
-    				if(plugin.verbose) AngryWolves.log.info("Mapped " + ct + " spawn to angry wolf");
+    				if(plugin.verbose) AngryWolves.log.info("Mapped " + ct + " spawn to " + (angry?(do_hellhound?"hellhound":"angry world"):"wolf"));
     			}
     		}
     	}
@@ -201,11 +203,11 @@ public class AngryWolvesEntityListener extends EntityListener {
 							double dy = ploc.getY() - loc.getY();
 							double dz = ploc.getZ() - loc.getZ();
 							if(((dx*dx) + (dy*dy) + (dz*dz)) <= (radius*radius)) {
-								p.sendMessage(sm);
+								p.sendMessage(AngryWolves.processMessage(sm));
 							}
 						}
 						else
-							p.sendMessage(sm);
+							p.sendMessage(AngryWolves.processMessage(sm));
 					}
 				}
   			}
@@ -281,7 +283,7 @@ public class AngryWolvesEntityListener extends EntityListener {
     			return;
     		String msg = cfg.getWolfInSheepMsg();
     		if((msg != null) && (msg.length() > 0))
-    			p.sendMessage(cfg.getWolfInSheepMsg());
+    			p.sendMessage(AngryWolves.processMessage(cfg.getWolfInSheepMsg()));
     		evt.setCancelled(true);	/* Cancel event */
     		e.remove();	/* Remove the sheep */
     	

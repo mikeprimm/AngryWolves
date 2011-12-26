@@ -48,11 +48,13 @@ public class AngryWolves extends JavaPlugin {
     public static final String CONFIG_MOBTOWOLF_RATE = "mob-to-wolf-rate";
     public static final String CONFIG_MOBTOWILDWOLF_RATE = "mob-to-wildwolf-rate";
     public static final String CONFIG_FULLMOON_MOBTOWOLF_RATE = "fullmoon-mob-to-wolf-rate";
+    
     public static final String CONFIG_CREEPERTOWOLF_RATE = "creeper-to-wolf-rate";
     public static final String CONFIG_ZOMBIETOWOLF_RATE = "zombie-to-wolf-rate";
     public static final String CONFIG_PIGZOMBIETOWOLF_RATE = "pigzombie-to-wolf-rate";
     public static final String CONFIG_SPIDERTOWOLF_RATE = "spider-to-wolf-rate";
     public static final String CONFIG_SKELETONTOWOLF_RATE = "skeleton-to-wolf-rate";
+    
     public static final String CONFIG_DAYSPERMOON = "days-between-fullmoons";
     public static final String CONFIG_ANGERRATE_MOON = "anger-rate-fullmoon";
     public static final String CONFIG_FULLMOONMSG = "fullmoonmsg";
@@ -97,6 +99,21 @@ public class AngryWolves extends JavaPlugin {
     
     public static final String WOLF_FRIEND_PERM = "angrywolves.wolf-friend";
 
+    public static String processMessage(String msg) {
+        int off = 0;
+        
+        while((off = msg.indexOf('&', off)) >= 0) {
+            if(msg.charAt(off+1) == '&') {  /* && - make & */
+                msg = msg.substring(0, off) + msg.substring(off+1);
+            }
+            else {  /* Else, replace with the color character code */
+                msg = msg.substring(0, off) + "\u00A7" + msg.substring(off+1);
+            }
+            off++;
+        }
+        return msg;
+    }
+    
     /* Common configuration attributes - all tiers */
     public static abstract class BaseConfig {
 		String spawnmsg;
@@ -836,7 +853,7 @@ public class AngryWolves extends JavaPlugin {
     							String msg = pc.getFullMoonMsg();
     							/* Send the message to the player, if there is one */
     							if((msg != null) && (msg.length() > 0)) {
-    								p.sendMessage(msg);
+    								p.sendMessage(processMessage(msg));
     							}
     						}
     						/* And make the wolves angry */
@@ -954,7 +971,7 @@ public class AngryWolves extends JavaPlugin {
     			fos.println("# At the end of the full moon, fullmoon-stay-angry-rate percent of angry wolves stay angry");
     			fos.println(CONFIG_DAYSPERMOON + ": 8");
     			fos.println(CONFIG_ANGERRATE_MOON +": 25");
-    			fos.println(CONFIG_FULLMOONMSG + ": The wolves are baying at the full moon ...");
+    			fos.println(CONFIG_FULLMOONMSG + ": \"&4The wolves are baying at the full moon ...\"");
     			fos.println(CONFIG_FULLMOON_STAY_ANGRY_RATE + ": 0");
     			fos.println("# Optional - mob-to-wolf-rate to apply during full moon (if set - otherwise, same rate used)");
     			fos.println("# " + CONFIG_FULLMOON_MOBTOWOLF_RATE + ": 50");
@@ -964,7 +981,7 @@ public class AngryWolves extends JavaPlugin {
     			fos.println("# " + CONFIG_SPAWNMSGRADIUS + ": 50");
     			fos.println("# Wolf-in-sheeps-clothing rate : in 10ths of a percent");
     			fos.println(CONFIG_WOLFINSHEEP_RATE + ": 0");
-    			fos.println(CONFIG_WOLFINSHEEP_MSG + ": Oh, no! A wolf in sheep's clothing!");
+    			fos.println(CONFIG_WOLFINSHEEP_MSG + ": \"Oh, no! A wolf in sheep's clothing!\"");
     			fos.println("# Optional - enable 'wolf-friends' : players with the 'angrywolves.wolf-friend' privilege will not be targetted by angry wolves!");
     			fos.println("# " + CONFIG_WOLFFRIEND + ": true");
     			fos.println("# Optional - enable wolf loot - wolf-loot-rate is percent change of drop, wolf-loot is list of item ids to select from (1 randomly picked), wolf-xp is experience orbs dropped");
