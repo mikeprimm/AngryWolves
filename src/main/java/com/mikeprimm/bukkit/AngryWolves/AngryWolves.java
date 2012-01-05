@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.logging.Logger;
 
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.MemoryConfiguration;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.CreatureType;
 import org.bukkit.entity.Player;
@@ -22,6 +23,7 @@ import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Collections;
 
@@ -727,7 +729,11 @@ public class AngryWolves extends JavaPlugin {
             	z = new double[len];
             	int i = 0;
             	for(Object coordobj : cl) {	/* Loop through coords */
-            	    ConfigurationSection coord = (ConfigurationSection)coordobj;
+            	    ConfigurationSection coord = new MemoryConfiguration();
+                    for(Map.Entry<String,Object> me : ((Map<String,Object>)coordobj).entrySet()) {
+                        coord.set(me.getKey(), me.getValue());
+                    }
+
             		x[i] = coord.getDouble("x", 0.0);
             		z[i] = coord.getDouble("z", 0.0);	/* Read coordinates into array */
             		if(i > 0) {	/* Compute bounding box */
@@ -960,7 +966,10 @@ public class AngryWolves extends JavaPlugin {
         List w = cfg.getList("worlds");
         if(w != null) {
         	for(Object worldobj : w) {
-        	    ConfigurationSection world = (ConfigurationSection)worldobj;
+                ConfigurationSection world = new MemoryConfiguration();
+    	        for(Map.Entry<String,Object> me : ((Map<String,Object>)worldobj).entrySet()) {
+    	            world.set(me.getKey(), me.getValue());
+    	        }
         		String wname = world.getString("name");	/* Get name */
         		if(wname == null)
         			continue;
@@ -976,7 +985,10 @@ public class AngryWolves extends JavaPlugin {
         w = cfg.getList("areas");
         if(w != null) {
         	for(Object areaobj : w) {
-        	    ConfigurationSection area = (ConfigurationSection)areaobj;
+        	    ConfigurationSection area = new MemoryConfiguration();
+                for(Map.Entry<String,Object> me : ((Map<String,Object>)areaobj).entrySet()) {
+                    area.set(me.getKey(), me.getValue());
+                }
         		String aname = area.getString("name");	/* Get name */
         		if(aname == null)
         			continue;
