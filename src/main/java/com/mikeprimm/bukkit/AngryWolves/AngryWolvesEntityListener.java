@@ -123,8 +123,8 @@ public class AngryWolvesEntityListener extends EntityListener {
 
                 if(plugin.verbose) AngryWolves.log.info("biome=" + bio + ", ignore=" + ignore_terrain + ", angry=" + angry + ", hellhound=" + do_hellhound);
         		/* If valid biome for wolf (or hellhound) */
-        		if(ignore_terrain || bio.equals(Biome.FOREST) || bio.equals(Biome.TAIGA) || bio.equals(Biome.SEASONAL_FOREST) ||
-        				bio.equals(Biome.HELL)) {
+        		if(ignore_terrain || (bio == Biome.FOREST) || (bio == Biome.TAIGA) || (bio == Biome.SEASONAL_FOREST) ||
+        				(bio == Biome.HELL) || (bio == Biome.FOREST_HILLS) || (bio == Biome.TAIGA_HILLS)) {
     				/* If hellhound in hell, we're good */
     				if(bio.equals(Biome.HELL)) {
     				    if(!do_hellhound)   /* Only angry hellhounds in nether */

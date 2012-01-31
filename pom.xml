@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.mikeprimm.bukkit</groupId>
   <artifactId>AngryWolves</artifactId>
-  <version>0.9.4</version>
+  <version>0.9.5</version>
   <name>AngryWolves</name>
   <url></url>
   <build>
@@ -32,7 +32,7 @@
     <dependency>
       <groupId>org.bukkit</groupId>
       <artifactId>bukkit</artifactId>
-      <version>[1.0.0-R1-SNAPSHOT,)</version>
+      <version>[1.1-R1-SNAPSHOT,)</version>
       <type>jar</type>
       <scope>compile</scope>
     </dependency>
