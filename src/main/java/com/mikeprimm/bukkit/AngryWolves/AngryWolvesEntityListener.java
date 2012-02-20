@@ -8,17 +8,17 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.Material;
 import org.bukkit.entity.Fireball;
 import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.SmallFireball;
 import org.bukkit.entity.Wolf;
 import org.bukkit.entity.Sheep;
 import org.bukkit.entity.Entity;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityTargetEvent;
-import org.bukkit.event.entity.EntityListener;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -30,12 +30,11 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.HashSet;
-import java.util.logging.Logger;
 /**
  * Entity listener - listen for spawns of wolves
  * @author MikePrimm
  */
-public class AngryWolvesEntityListener extends EntityListener {
+public class AngryWolvesEntityListener implements Listener {
     private final AngryWolves plugin;
     private final Random rnd = new Random(System.currentTimeMillis());
     private Map<String, Long> msg_ts_by_world = new HashMap<String, Long>();
@@ -89,7 +88,7 @@ public class AngryWolvesEntityListener extends EntityListener {
     private boolean checkLimit() {
     	return angrywolf_ids.size() < plugin.getPopulationLimit();
     }
-    @Override
+    @EventHandler
     public void onCreatureSpawn(CreatureSpawnEvent event) {
     	if(event.isCancelled())
     		return;
@@ -213,7 +212,7 @@ public class AngryWolvesEntityListener extends EntityListener {
   			}
     	}
     }
-    @Override
+    @EventHandler
     public void onEntityDamage(EntityDamageEvent event) {
     	if(event.isCancelled())
     		return;
@@ -310,7 +309,7 @@ public class AngryWolvesEntityListener extends EntityListener {
     		}
     	}
     }
-    @Override
+    @EventHandler
     public void onEntityTarget(EntityTargetEvent event) {
     	if(event.isCancelled())
     		return;
@@ -333,7 +332,7 @@ public class AngryWolvesEntityListener extends EntityListener {
     		if(plugin.verbose) AngryWolves.log.info("Cancelled target on wolf friend");
     	}
     }
-    @Override
+    @EventHandler
     public void onEntityDeath(EntityDeathEvent event) {
         Entity e = event.getEntity();
         if(!(e instanceof Wolf)) {    /* Don't care about non-wolves */

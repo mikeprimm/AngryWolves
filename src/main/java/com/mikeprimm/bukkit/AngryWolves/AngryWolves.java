@@ -14,14 +14,9 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.PluginManager;
-import org.bukkit.event.Event;
-import org.bukkit.event.Event.Priority;
 import org.bukkit.Location;
 import org.bukkit.World;
 import java.io.File;
-import java.io.FileWriter;
-import java.io.PrintWriter;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -694,7 +689,6 @@ public class AngryWolves extends JavaPlugin {
     private static class PerWorldState extends WorldConfig {
     	boolean moon_is_full;
     	int	daycounter;
-    	long	last_time;
     	List<AreaConfig> areas;
     	
     	PerWorldState() {
@@ -847,7 +841,6 @@ public class AngryWolves extends JavaPlugin {
     			else {    				
     				long t = world.getFullTime();	/* Get time of day */
     				pws.daycounter = (int)(t / 24000);
-    				pws.last_time = t;
     				
     				long dom = pws.daycounter % dpm;	/* Compute day of "month" */
                     if(verbose) log.info("dayofmonth=" + dom);
@@ -925,10 +918,7 @@ public class AngryWolves extends JavaPlugin {
 
         // Register our events
         PluginManager pm = getServer().getPluginManager();
-        pm.registerEvent(Event.Type.CREATURE_SPAWN, entityListener, Priority.Normal, this);
-        pm.registerEvent(Event.Type.ENTITY_DAMAGE, entityListener, Priority.Normal, this);
-        pm.registerEvent(Event.Type.ENTITY_TARGET, entityListener, Priority.Normal, this);
-        pm.registerEvent(Event.Type.ENTITY_DEATH, entityListener, Priority.Normal, this);
+        pm.registerEvents(entityListener, this);
         
         PluginDescriptionFile pdfFile = this.getDescription();
         log.info("[AngryWolves] version " + pdfFile.getVersion() + " is enabled" );
