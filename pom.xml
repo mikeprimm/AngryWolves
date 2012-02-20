@@ -3,7 +3,7 @@
   <groupId>com.mikeprimm.bukkit</groupId>
   <artifactId>AngryWolves</artifactId>
   <name>AngryWolves</name>
-  <version>1.0.0</version>
+  <version>1.0.1</version>
   <url></url>
   <build>
   	  <resources>
