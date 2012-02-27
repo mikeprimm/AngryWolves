@@ -7,7 +7,7 @@ import java.util.logging.Logger;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.MemoryConfiguration;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.entity.CreatureType;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Wolf;
 import org.bukkit.entity.LivingEntity;
@@ -163,7 +163,7 @@ public class AngryWolves extends JavaPlugin {
     	 * @param t - mob type
     	 * @return rate, or null if not found 
     	 */
-    	private Integer getMobSpecWolfRate(CreatureType t) {
+    	private Integer getMobSpecWolfRate(EntityType t) {
     		Integer r = null;
     		switch(t) {
     			case SKELETON:
@@ -191,7 +191,7 @@ public class AngryWolves extends JavaPlugin {
     		return r;
     	}
     	
-    	public int getMobToWolfRate(CreatureType mob, boolean is_fullmoon) {
+    	public int getMobToWolfRate(EntityType mob, boolean is_fullmoon) {
     		int rate = 0;
     		Integer r = getMobSpecWolfRate(mob);	/* See if specific rate defined */
     		if(r == null) {	/* No? Check for general rate */
@@ -1032,7 +1032,7 @@ public class AngryWolves extends JavaPlugin {
 	public LivingEntity spawnNormalWolf(World world, Location loc) {
 		boolean last = block_spawn_anger;
 		block_spawn_anger = true;
-		LivingEntity e = world.spawnCreature(loc, CreatureType.WOLF);
+		LivingEntity e = world.spawnCreature(loc, EntityType.WOLF);
 		block_spawn_anger = last;
 		return e;
 	}

@@ -1,11 +1,11 @@
 
 package com.mikeprimm.bukkit.AngryWolves;
 
-import org.bukkit.entity.CreatureType;
 import org.bukkit.block.Biome;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.Material;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Fireball;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Wolf;
@@ -62,7 +62,7 @@ public class AngryWolvesEntityListener implements Listener {
     	int health;
     	public void run() {
     	    doing_spawn = true;
-    		Wolf w = (Wolf)loc.getWorld().spawnCreature(loc, CreatureType.WOLF);
+    		Wolf w = (Wolf)loc.getWorld().spawnCreature(loc, EntityType.WOLF);
     		doing_spawn = false;
     		if(w != null) {
     		    if(angry)
@@ -96,14 +96,14 @@ public class AngryWolvesEntityListener implements Listener {
     	    return;
     	Location loc = event.getLocation();
     	boolean did_it = false;
-    	CreatureType ct = event.getCreatureType();
+    	EntityType ct = event.getSpawnedType();
     	if(ct == null)
     		return;
     	AngryWolves.BaseConfig cfg = null;
     	/* If monster spawn */
-    	if(ct.equals(CreatureType.ZOMBIE) || ct.equals(CreatureType.CREEPER) ||
-    		ct.equals(CreatureType.SPIDER) || ct.equals(CreatureType.SKELETON) ||
-    		ct.equals(CreatureType.PIG_ZOMBIE)) {
+    	if(ct.equals(EntityType.ZOMBIE) || ct.equals(EntityType.CREEPER) ||
+    		ct.equals(EntityType.SPIDER) || ct.equals(EntityType.SKELETON) ||
+    		ct.equals(EntityType.PIG_ZOMBIE)) {
     		/* Find configuration for our location */
     		cfg = plugin.findByLocation(loc);
     		//plugin.log.info("mob: " + cfg);
@@ -151,7 +151,7 @@ public class AngryWolvesEntityListener implements Listener {
     			}
     		}
     	}
-    	else if(ct.equals(CreatureType.WOLF)) {
+    	else if(ct.equals(EntityType.WOLF)) {
     		Wolf w = (Wolf)event.getEntity();
     		/* If not angry and not tame  */
     		if((w.isAngry() == false) && (plugin.isTame(w) == false) && (!plugin.isNormalSpawn())) {
