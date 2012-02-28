@@ -7,10 +7,15 @@ import java.util.logging.Logger;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.MemoryConfiguration;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Creeper;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.PigZombie;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Skeleton;
+import org.bukkit.entity.Spider;
 import org.bukkit.entity.Wolf;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Zombie;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.PluginManager;
@@ -163,35 +168,33 @@ public class AngryWolves extends JavaPlugin {
     	 * @param t - mob type
     	 * @return rate, or null if not found 
     	 */
-    	private Integer getMobSpecWolfRate(EntityType t) {
+    	private Integer getMobSpecWolfRate(Entity ent) {
     		Integer r = null;
-    		switch(t) {
-    			case SKELETON:
-    				r = skeletontowolf_rate;
-    				break;
-    			case ZOMBIE:
-    				r = zombietowolf_rate;
-    				break;
-    			case PIG_ZOMBIE:
-    				r = pigzombietowolf_rate;
-    				break;
-    			case SPIDER:
-    				r = spidertowolf_rate;
-    				break;
-    			case CREEPER:
-    				r = creepertowolf_rate;
-    				break;
+    		if(ent instanceof Skeleton) {
+				r = skeletontowolf_rate;
+    		}
+    		else if(ent instanceof Zombie) {
+				r = zombietowolf_rate;
+    		}
+    		else if(ent instanceof PigZombie) {
+				r = pigzombietowolf_rate;
+    		}
+    		else if(ent instanceof Spider) {
+				r = spidertowolf_rate;
+    		}
+    		else if(ent instanceof Creeper) {
+				r = creepertowolf_rate;
     		}
     		if(r == null) {	/* Not defined here? check parents */
         		BaseConfig p = getParent();
         		if(p != null) {
-        			r = p.getMobSpecWolfRate(t);
+        			r = p.getMobSpecWolfRate(ent);
         		}    			
     		}
     		return r;
     	}
     	
-    	public int getMobToWolfRate(EntityType mob, boolean is_fullmoon) {
+    	public int getMobToWolfRate(Entity mob, boolean is_fullmoon) {
     		int rate = 0;
     		Integer r = getMobSpecWolfRate(mob);	/* See if specific rate defined */
     		if(r == null) {	/* No? Check for general rate */
@@ -1032,7 +1035,7 @@ public class AngryWolves extends JavaPlugin {
 	public LivingEntity spawnNormalWolf(World world, Location loc) {
 		boolean last = block_spawn_anger;
 		block_spawn_anger = true;
-		LivingEntity e = world.spawnCreature(loc, EntityType.WOLF);
+		LivingEntity e = world.spawn(loc, Wolf.class);
 		block_spawn_anger = last;
 		return e;
 	}

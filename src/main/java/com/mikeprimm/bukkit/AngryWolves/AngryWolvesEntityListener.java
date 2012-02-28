@@ -5,12 +5,16 @@ import org.bukkit.block.Biome;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.Material;
-import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Creeper;
 import org.bukkit.entity.Fireball;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.PigZombie;
+import org.bukkit.entity.Skeleton;
+import org.bukkit.entity.Spider;
 import org.bukkit.entity.Wolf;
 import org.bukkit.entity.Sheep;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.Zombie;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.CreatureSpawnEvent;
@@ -62,7 +66,7 @@ public class AngryWolvesEntityListener implements Listener {
     	int health;
     	public void run() {
     	    doing_spawn = true;
-    		Wolf w = (Wolf)loc.getWorld().spawnCreature(loc, EntityType.WOLF);
+    		Wolf w = (Wolf)loc.getWorld().spawn(loc, Wolf.class);
     		doing_spawn = false;
     		if(w != null) {
     		    if(angry)
@@ -96,20 +100,20 @@ public class AngryWolvesEntityListener implements Listener {
     	    return;
     	Location loc = event.getLocation();
     	boolean did_it = false;
-    	EntityType ct = event.getSpawnedType();
-    	if(ct == null)
+    	Entity ent = event.getEntity();
+    	if(ent == null)
     		return;
     	AngryWolves.BaseConfig cfg = null;
     	/* If monster spawn */
-    	if(ct.equals(EntityType.ZOMBIE) || ct.equals(EntityType.CREEPER) ||
-    		ct.equals(EntityType.SPIDER) || ct.equals(EntityType.SKELETON) ||
-    		ct.equals(EntityType.PIG_ZOMBIE)) {
+    	if((ent instanceof Zombie) || (ent instanceof Creeper) ||
+    		(ent instanceof Spider) || (ent instanceof Skeleton) ||
+    		(ent instanceof PigZombie)) {
     		/* Find configuration for our location */
     		cfg = plugin.findByLocation(loc);
     		//plugin.log.info("mob: " + cfg);
-    		int rate = cfg.getMobToWolfRate(ct, plugin.isFullMoon(loc.getWorld()));
+    		int rate = cfg.getMobToWolfRate(ent, plugin.isFullMoon(loc.getWorld()));
     		int rate2 = cfg.mobToWildWolfRate();
-    		if(plugin.verbose) AngryWolves.log.info("mobrate(" + ct + ")=" + rate);
+    		if(plugin.verbose) AngryWolves.log.info("mobrate(" + ent.getClass().getName() + ")=" + rate);
     		/* If so, percentage is relative to population of monsters (percent * 10% is chance we grab */
     		int rndval = rnd.nextInt(1000);
     		if(((rate+rate2) > 0)  && (rndval < (rate+rate2)) && checkLimit()) {
@@ -147,11 +151,11 @@ public class AngryWolvesEntityListener implements Listener {
     				ds.health = do_hellhound?plugin.getHellhoundHealth():plugin.getAngryWolfHealth();
     				plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, ds);
     				did_it = true;
-    				if(plugin.verbose) AngryWolves.log.info("Mapped " + ct + " spawn to " + (angry?(do_hellhound?"hellhound":"angry world"):"wolf"));
+    				if(plugin.verbose) AngryWolves.log.info("Mapped " + ent.getClass().getName() + " spawn to " + (angry?(do_hellhound?"hellhound":"angry world"):"wolf"));
     			}
     		}
     	}
-    	else if(ct.equals(EntityType.WOLF)) {
+    	else if(ent instanceof Wolf) {
     		Wolf w = (Wolf)event.getEntity();
     		/* If not angry and not tame  */
     		if((w.isAngry() == false) && (plugin.isTame(w) == false) && (!plugin.isNormalSpawn())) {
