@@ -302,7 +302,7 @@ public class AngryWolvesEntityListener implements Listener {
     		}
     		/* If we don't do wolf-friends here, skip it (check based on player's location) */
     		AngryWolves.BaseConfig cfg = plugin.findByLocation(e.getLocation());
-    		//plugin.log.info("wolffriend: " + cfg);
+    		if(plugin.verbose) AngryWolves.log.info("wolffriend: " + cfg.getWolfFriendActive());
     		if(cfg.getWolfFriendActive() == false) {
     			return;
     		}
@@ -325,6 +325,7 @@ public class AngryWolvesEntityListener implements Listener {
     	Entity t = event.getTarget();
     	if(!(t instanceof Player)) 	/* Don't worry about non-player targets */
     		return;
+    	if(plugin.verbose) AngryWolves.log.info("Wolf considering player as target"); 
     	Player p = (Player)t;
     	/* If we don't do wolf-friends here, skip it (check based on player's location) */
     	AngryWolves.BaseConfig cfg = plugin.findByLocation(p.getLocation());

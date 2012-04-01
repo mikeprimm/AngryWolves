@@ -57,16 +57,9 @@
     <dependency>
       <groupId>org.bukkit</groupId>
       <artifactId>bukkit</artifactId>
-      <version>1.1-R5-SNAPSHOT</version>
+      <version>[1.2.4-R1.0,1.7)</version>
       <type>jar</type>
       <scope>compile</scope>
     </dependency>
-        <dependency>
-        	<groupId>com.nijikokun.bukkit</groupId>
-        	<artifactId>Permissions</artifactId>
-        	<version>[2.6,)</version>
-     	    <type>jar</type>
-        	<scope>compile</scope>
-        </dependency>
   </dependencies>
 </project>
