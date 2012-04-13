@@ -4,9 +4,16 @@ import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.logging.Logger;
 
+import net.minecraft.server.EntityHuman;
+import net.minecraft.server.EntityLiving;
+import net.minecraft.server.EntityWolf;
+import net.minecraft.server.PathfinderGoalNearestAttackableTarget;
+import net.minecraft.server.PathfinderGoalSelector;
+
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.MemoryConfiguration;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.craftbukkit.entity.CraftWolf;
 import org.bukkit.entity.Creeper;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.PigZombie;
@@ -22,6 +29,7 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.Location;
 import org.bukkit.World;
 import java.io.File;
+import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -37,6 +45,7 @@ public class AngryWolves extends JavaPlugin {
     private final AngryWolvesEntityListener entityListener = new AngryWolvesEntityListener(this);
     private final HashMap<Player, Boolean> debugees = new HashMap<Player, Boolean>();
     public boolean verbose = false;
+    private static Field targetSelector;
     private int poplimit = ANGRYWOLF_POPLIMIT;
     private double hellhound_dmgscale = HELLHOUND_DMGSCALE;
     private int hellhound_health = HELLHOUND_HEALTH;
@@ -871,7 +880,7 @@ public class AngryWolves extends JavaPlugin {
     									/* Check situation at wolf's location */
     									AngryWolves.BaseConfig wc = findByLocation(wolf.getLocation());
 										if(rnd.nextInt(100) < wc.getSpawnAngerRateMoon()) {
-											wolf.setAngry(true);
+											setAngry(wolf, true);
 											if(verbose) log.info("Made wolf angry (full moon)");
 										}
     								}
@@ -893,7 +902,7 @@ public class AngryWolves extends JavaPlugin {
 									BaseConfig loc = findByLocation(wolf.getLocation());
 									if(loc.getSpawnAngerRateMoon() > 0) {
 										if(rnd.nextInt(100) >= loc.getStayAngryRateMoon()) {
-											wolf.setAngry(false);
+											setAngry(wolf, false);
 											wolf.setTarget(null);
 											if(verbose) log.info("Made angry wolf calm (end-of-moon)");
 										}
@@ -913,6 +922,18 @@ public class AngryWolves extends JavaPlugin {
     }
 
     public void onEnable() {
+        try {
+            targetSelector = EntityLiving.class.getDeclaredField("targetSelector");
+            if(targetSelector == null) {
+                log.warning("Error loading wolf behavior selector - cannot fix behavior");
+            }
+            else {
+                targetSelector.setAccessible(true);
+            }
+        } catch (NoSuchFieldException nsfx) {
+            log.warning("Error finding wolf behavior selector - cannot fix behavior");
+        }
+        
     	/* Initialize our permissions */
     	AngryWolvesPermissions.initialize(getServer());
     	
@@ -1042,5 +1063,21 @@ public class AngryWolves extends JavaPlugin {
 
     public void setDebugging(final Player player, final boolean value) {
         debugees.put(player, value);
+    }
+    public static void setAngry(Wolf wolf, boolean isangry) {
+        if((targetSelector != null) && (wolf instanceof CraftWolf) && isangry) {
+            CraftWolf cw = (CraftWolf)wolf;
+            EntityWolf ew = cw.getHandle();
+            PathfinderGoalSelector sel = null;
+            try {
+                sel = (PathfinderGoalSelector)targetSelector.get(ew);
+            } catch (IllegalArgumentException iax) {
+            } catch (IllegalAccessException ixx) {
+            }
+            if(sel != null) {
+                sel.a(4, new PathfinderGoalNearestAttackableTarget(ew, EntityHuman.class, 16.0F, 0, true));
+            }
+        }
+        wolf.setAngry(isangry);
     }
 }
