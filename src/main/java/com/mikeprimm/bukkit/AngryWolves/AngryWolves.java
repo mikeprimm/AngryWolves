@@ -29,6 +29,7 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.Location;
 import org.bukkit.World;
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
@@ -948,6 +949,12 @@ public class AngryWolves extends JavaPlugin {
         log.info("[AngryWolves] version " + pdfFile.getVersion() + " is enabled" );
         /* Start job to watch for sunset/sunrise (every 30 seconds or so) */
         getServer().getScheduler().scheduleSyncRepeatingTask(this, new CheckForMoon(), 0, 20*30);
+        
+        try {
+            MetricsLite ml = new MetricsLite(this);
+            ml.start();
+        } catch (IOException iox) {
+        }
     }
     
     private void readConfig() {
