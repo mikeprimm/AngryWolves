@@ -68,6 +68,12 @@ hellhound-damagescale: 0.5
 # hellhound-fireball-range: 10
 # hellhound-fireball-rate: 3
 #hellhound-fireball-incendiary: false
+
+# Rate of villagers becoming angry wolves during full moon (AKA werewolves) (percent)
+villager-werewolf-rate: 0.0
+# If true, angry wolves/hellhounds will hunt villagers
+angrywolf-hunts-villagers: false
+
 # For multi-world specific rates, fill in rate under section for each world
 worlds:
   - name: transylvania

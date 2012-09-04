@@ -62,6 +62,7 @@ public class AngryWolvesEntityListener implements Listener {
     	Player tgt;
     	boolean is_hellhound;
     	boolean angry;
+    	boolean huntvillagers;
     	boolean pup;
     	int health;
     	public void run() {
@@ -70,7 +71,7 @@ public class AngryWolvesEntityListener implements Listener {
     		doing_spawn = false;
     		if(w != null) {
     		    if(angry)
-    		        AngryWolves.setAngry(w, true);
+    		        AngryWolves.setAngry(w, true, huntvillagers);
     			if(tgt != null)
     				w.setTarget(tgt);
     			if(is_hellhound) {
@@ -168,7 +169,7 @@ public class AngryWolvesEntityListener implements Listener {
     				rate = fmrate;
     			}
     			if((rate > 0) && (rnd.nextInt(100) <= rate) && checkLimit()) {
-    				AngryWolves.setAngry(w, true);
+    				AngryWolves.setAngry(w, true, cfg.huntVillagers());
     				/* See if it is a hellhound! */
     				rate = cfg.getHellhoundRate();
     				if((rate > 0) && (rnd.nextInt(100) <= rate)) {

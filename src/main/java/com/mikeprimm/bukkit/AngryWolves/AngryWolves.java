@@ -6,6 +6,7 @@ import java.util.logging.Logger;
 
 import net.minecraft.server.EntityHuman;
 import net.minecraft.server.EntityLiving;
+import net.minecraft.server.EntityVillager;
 import net.minecraft.server.EntityWolf;
 import net.minecraft.server.PathfinderGoalNearestAttackableTarget;
 import net.minecraft.server.PathfinderGoalSelector;
@@ -20,6 +21,8 @@ import org.bukkit.entity.PigZombie;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Skeleton;
 import org.bukkit.entity.Spider;
+import org.bukkit.entity.Villager;
+import org.bukkit.entity.Villager.Profession;
 import org.bukkit.entity.Wolf;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Zombie;
@@ -31,6 +34,8 @@ import org.bukkit.World;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -94,6 +99,8 @@ public class AngryWolves extends JavaPlugin {
     public static final String CONFIG_HELLHOUND_FIREBALL_RANGE = "hellhound-fireball-range";
     public static final String CONFIG_HELLHOUND_FIREBALL_INCENDIARY = "hellhound-fireball-incendiary";
     public static final String CONFIG_PUPS_ON_SHEEP_KILL_RATE = "pup-on-sheep-kill-rate";
+    public static final String CONFIG_VILLAGER_WEREWOLF_RATE = "villager-werewolf-rate";
+    public static final String CONFIG_ANGRYWOLF_HUNTS_VILLAGERS = "angrywolf-hunts-villagers";
     
     public static final int SPAWN_ANGERRATE_DEFAULT = 0;
     public static final int MOBTOWOLF_RATE_DEFAULT = 10;
@@ -160,6 +167,8 @@ public class AngryWolves extends JavaPlugin {
         Integer hellhound_fireball_range;
         Boolean hellhound_fireball_incendiary;
         Integer pup_on_kill_rate;
+        Double werewolf_rate;
+        Boolean hunt_villagers;
         
     	abstract BaseConfig getParent();
     	
@@ -494,6 +503,28 @@ public class AngryWolves extends JavaPlugin {
                 return -1;  /* Use wolf rate */          
         }   
 
+        public double getWerewolfRate() {
+            if(werewolf_rate != null) {
+                return werewolf_rate.doubleValue();
+            }
+            BaseConfig p = getParent();
+            if(p != null)
+                return p.getWerewolfRate();
+            else
+                return 0.0;
+        }   
+
+        public boolean huntVillagers() {
+            if(hunt_villagers != null) {
+                return hunt_villagers.booleanValue();
+            }
+            BaseConfig p = getParent();
+            if(p != null)
+                return p.huntVillagers();
+            else
+                return false;
+        }   
+
         public List<Integer> getHellHoundLoot() {
             if(hellhoundloot != null) {
                 return hellhoundloot;
@@ -645,6 +676,12 @@ public class AngryWolves extends JavaPlugin {
    			}
             if(n.get(CONFIG_HELLHOUNDXP) != null) {
                 hellhoundxp = n.getInt(CONFIG_HELLHOUNDXP, 0);
+            }
+            if(n.get(CONFIG_VILLAGER_WEREWOLF_RATE) != null) {
+                werewolf_rate = n.getDouble(CONFIG_VILLAGER_WEREWOLF_RATE, 0.0);
+            }
+            if(n.get(CONFIG_ANGRYWOLF_HUNTS_VILLAGERS) != null) {
+                hunt_villagers = n.getBoolean(CONFIG_ANGRYWOLF_HUNTS_VILLAGERS, false);
             }
     	}
     	public String toString() {
@@ -881,10 +918,20 @@ public class AngryWolves extends JavaPlugin {
     									/* Check situation at wolf's location */
     									AngryWolves.BaseConfig wc = findByLocation(wolf.getLocation());
 										if(rnd.nextInt(100) < wc.getSpawnAngerRateMoon()) {
-											setAngry(wolf, true);
+											setAngry(wolf, true, wc.huntVillagers());
 											if(verbose) log.info("Made wolf angry (full moon)");
 										}
     								}
+    							}
+    							else if(le instanceof Villager) {
+    							    Villager villager = (Villager)le;
+                                    /* Check situation at villager's location */
+    							    Location loc = villager.getLocation();
+                                    AngryWolves.BaseConfig wc = findByLocation(loc);
+    							    if(rnd.nextDouble() < (0.01 * wc.getWerewolfRate())) {
+                                        if(verbose) log.info("Made villager into werewolf (full moon)");
+    							        makeWerewolf(loc, villager, wc.huntVillagers());
+    							    }
     							}
     						}
     					}
@@ -903,7 +950,7 @@ public class AngryWolves extends JavaPlugin {
 									BaseConfig loc = findByLocation(wolf.getLocation());
 									if(loc.getSpawnAngerRateMoon() > 0) {
 										if(rnd.nextInt(100) >= loc.getStayAngryRateMoon()) {
-											setAngry(wolf, false);
+											setAngry(wolf, false, loc.huntVillagers());
 											wolf.setTarget(null);
 											if(verbose) log.info("Made angry wolf calm (end-of-moon)");
 										}
@@ -911,6 +958,8 @@ public class AngryWolves extends JavaPlugin {
 								}
 							}
 						}
+						/* And restore the werewolf villagers */
+						revertWerewolves(world);
     				}
     			}
     		}
@@ -1071,7 +1120,7 @@ public class AngryWolves extends JavaPlugin {
     public void setDebugging(final Player player, final boolean value) {
         debugees.put(player, value);
     }
-    public static void setAngry(Wolf wolf, boolean isangry) {
+    public static void setAngry(Wolf wolf, boolean isangry, boolean hunt_villagers) {
         if((targetSelector != null) && (wolf instanceof CraftWolf) && isangry) {
             CraftWolf cw = (CraftWolf)wolf;
             EntityWolf ew = cw.getHandle();
@@ -1083,8 +1132,65 @@ public class AngryWolves extends JavaPlugin {
             }
             if(sel != null) {
                 sel.a(4, new PathfinderGoalNearestAttackableTarget(ew, EntityHuman.class, 16.0F, 0, true));
+                if(hunt_villagers) {
+                    sel.a(5, new PathfinderGoalNearestAttackableTarget(ew, EntityVillager.class, 16.0F, 0, false));
+                }
             }
         }
         wolf.setAngry(isangry);
+    }
+    
+    private static class Werewolf {
+        Wolf wolf;
+        int villager_age;
+        int villager_health;
+        Profession villager_profession;
+        boolean villager_adult;
+    }
+    private static List<Werewolf> werewolves = new LinkedList<Werewolf>();
+    
+    public static void makeWerewolf(Location loc, Villager villager, boolean hunt_villagers) {
+        Werewolf ww = new Werewolf();
+        ww.villager_age = villager.getAge();
+        ww.villager_health = villager.getHealth();
+        ww.villager_profession = villager.getProfession();
+        ww.villager_adult = villager.isAdult();
+        villager.remove();
+        ww.wolf = loc.getWorld().spawn(loc, Wolf.class);
+        if (ww.wolf != null) {
+            setAngry(ww.wolf, true, hunt_villagers);
+            if(ww.villager_adult)
+                ww.wolf.setAdult();
+            else
+                ww.wolf.setBaby();
+            ww.wolf.setAge(ww.villager_age);
+            werewolves.add(ww);
+        }
+    }
+    public static void revertWerewolves(World w) {
+        Iterator<Werewolf> iter = werewolves.iterator();
+        while(iter.hasNext()) {
+            Werewolf ww = iter.next();
+            if(ww.wolf.isDead()) {
+                iter.remove();  // Drop dead werewolf
+            }
+            else if(ww.wolf.getWorld().equals(w)) {
+                // Remove wolf and respawn villager
+                Location loc = ww.wolf.getLocation();
+                ww.wolf.remove();
+                Villager v = w.spawn(loc, Villager.class);
+                if (v != null) {
+                    
+                    if(ww.villager_adult)
+                        v.setAdult();
+                    else
+                        v.setBaby();
+                    v.setAge(ww.villager_age);
+                    v.setHealth(ww.villager_health);
+                    v.setProfession(ww.villager_profession);
+                }
+                iter.remove();
+            }
+        }
     }
 }
