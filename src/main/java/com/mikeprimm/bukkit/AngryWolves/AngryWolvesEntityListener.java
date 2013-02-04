@@ -5,6 +5,7 @@ import org.bukkit.block.Biome;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.entity.Creeper;
 import org.bukkit.entity.Fireball;
 import org.bukkit.entity.LivingEntity;
@@ -215,6 +216,8 @@ public class AngryWolvesEntityListener implements Listener {
 					}
 				}
   			}
+            loc.getWorld().playSound(loc, Sound.WOLF_HOWL, 1.0F, 1.0F);
+            if(plugin.verbose) AngryWolves.log.info("Make howl sound");
     	}
     }
     @EventHandler
