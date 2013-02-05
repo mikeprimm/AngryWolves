@@ -80,9 +80,8 @@ public class AngryWolvesEntityListener implements Listener {
     				w.setFireTicks(HELLHOUND_FIRETICKS);	/* Set it on fire */
     			}
     			if(angry) {
-                    w.setTamed(true);
+    			    w.setMaxHealth(health);
                     w.setHealth(health);
-                    w.setTamed(false);
     			    angrywolf_ids.add(Integer.valueOf(w.getEntityId()));
     			}
     			if(pup) {
@@ -177,14 +176,14 @@ public class AngryWolvesEntityListener implements Listener {
     					hellhound_ids.put(w.getEntityId(), new HellHoundRecord());
     					w.setFireTicks(HELLHOUND_FIRETICKS);
         				if(plugin.verbose) AngryWolves.log.info("Made a spawned wolf into a hellhound");
-        				w.setTamed(true);	/* Get around health limit on untamed wolves */
-        				w.setHealth(plugin.getHellhoundHealth());
-        				w.setTamed(false);
+        				int hlth = plugin.getHellhoundHealth();
+        				w.setMaxHealth(hlth);
+        				w.setHealth(hlth);
     				}
     				else {
-        				w.setTamed(true);	/* Get around health limit on untamed wolves */
-    					w.setHealth(plugin.getAngryWolfHealth());
-        				w.setTamed(false);
+                        int hlth = plugin.getAngryWolfHealth();
+                        w.setMaxHealth(hlth);
+    					w.setHealth(hlth);
     					if(plugin.verbose) AngryWolves.log.info("Made a spawned wolf angry");
     				}
     				did_it = true;
