@@ -1131,9 +1131,9 @@ public class AngryWolves extends JavaPlugin {
             } catch (IllegalAccessException ixx) {
             }
             if(sel != null) {
-                sel.a(4, new PathfinderGoalNearestAttackableTarget(ew, EntityHuman.class, 16.0F, 0, true));
+                sel.a(5, new PathfinderGoalNearestAttackableTarget(ew, EntityHuman.class, 16.0F, 0, true));
                 if(hunt_villagers) {
-                    sel.a(5, new PathfinderGoalNearestAttackableTarget(ew, EntityVillager.class, 16.0F, 0, false));
+                    sel.a(6, new PathfinderGoalNearestAttackableTarget(ew, EntityVillager.class, 16.0F, 0, false));
                 }
             }
         }
