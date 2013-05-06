@@ -4,17 +4,17 @@ import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.logging.Logger;
 
-import net.minecraft.server.v1_5_R2.EntityHuman;
-import net.minecraft.server.v1_5_R2.EntityLiving;
-import net.minecraft.server.v1_5_R2.EntityVillager;
-import net.minecraft.server.v1_5_R2.EntityWolf;
-import net.minecraft.server.v1_5_R2.PathfinderGoalNearestAttackableTarget;
-import net.minecraft.server.v1_5_R2.PathfinderGoalSelector;
+import net.minecraft.server.v1_5_R3.EntityHuman;
+import net.minecraft.server.v1_5_R3.EntityLiving;
+import net.minecraft.server.v1_5_R3.EntityVillager;
+import net.minecraft.server.v1_5_R3.EntityWolf;
+import net.minecraft.server.v1_5_R3.PathfinderGoalNearestAttackableTarget;
+import net.minecraft.server.v1_5_R3.PathfinderGoalSelector;
+import org.bukkit.craftbukkit.v1_5_R3.entity.CraftWolf;
 
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.MemoryConfiguration;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.craftbukkit.v1_5_R2.entity.CraftWolf;
 import org.bukkit.entity.Creeper;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.PigZombie;
@@ -47,7 +47,7 @@ import java.util.Collections;
  * @author MikePrimm
  */
 public class AngryWolves extends JavaPlugin {
-	public static Logger log = Logger.getLogger("Minecraft");
+	public static Logger log;
     private final AngryWolvesEntityListener entityListener = new AngryWolvesEntityListener(this);
     private final HashMap<Player, Boolean> debugees = new HashMap<Player, Boolean>();
     public boolean verbose = false;
@@ -131,6 +131,10 @@ public class AngryWolves extends JavaPlugin {
             off++;
         }
         return msg;
+    }
+    @Override
+    public void onLoad() {
+        log = this.getLogger();
     }
     
     /* Common configuration attributes - all tiers */
@@ -995,7 +999,7 @@ public class AngryWolves extends JavaPlugin {
         pm.registerEvents(entityListener, this);
         
         PluginDescriptionFile pdfFile = this.getDescription();
-        log.info("[AngryWolves] version " + pdfFile.getVersion() + " is enabled" );
+        log.info("Version " + pdfFile.getVersion() + " is enabled" );
         /* Start job to watch for sunset/sunrise (every 30 seconds or so) */
         getServer().getScheduler().scheduleSyncRepeatingTask(this, new CheckForMoon(), 0, 20*30);
         
