@@ -3,7 +3,7 @@
   <groupId>com.mikeprimm.bukkit</groupId>
   <artifactId>AngryWolves</artifactId>
   <name>AngryWolves</name>
-  <version>1.6</version>
+  <version>1.7</version>
 	<properties>
 	   	<timestamp>${maven.build.timestamp}</timestamp>
    		<maven.build.timestamp.format>yyyyMMddHHmm</maven.build.timestamp.format>	
