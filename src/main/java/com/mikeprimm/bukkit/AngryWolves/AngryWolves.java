@@ -4,13 +4,14 @@ import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.logging.Logger;
 
-import net.minecraft.server.v1_5_R3.EntityHuman;
-import net.minecraft.server.v1_5_R3.EntityLiving;
-import net.minecraft.server.v1_5_R3.EntityVillager;
-import net.minecraft.server.v1_5_R3.EntityWolf;
-import net.minecraft.server.v1_5_R3.PathfinderGoalNearestAttackableTarget;
-import net.minecraft.server.v1_5_R3.PathfinderGoalSelector;
-import org.bukkit.craftbukkit.v1_5_R3.entity.CraftWolf;
+import net.minecraft.server.v1_6_R1.EntityHuman;
+import net.minecraft.server.v1_6_R1.EntityInsentient;
+import net.minecraft.server.v1_6_R1.EntityLiving;
+import net.minecraft.server.v1_6_R1.EntityVillager;
+import net.minecraft.server.v1_6_R1.EntityWolf;
+import net.minecraft.server.v1_6_R1.PathfinderGoalNearestAttackableTarget;
+import net.minecraft.server.v1_6_R1.PathfinderGoalSelector;
+import org.bukkit.craftbukkit.v1_6_R1.entity.CraftWolf;
 
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.MemoryConfiguration;
@@ -977,7 +978,7 @@ public class AngryWolves extends JavaPlugin {
 
     public void onEnable() {
         try {
-            targetSelector = EntityLiving.class.getDeclaredField("targetSelector");
+            targetSelector = EntityInsentient.class.getDeclaredField("targetSelector");
             if(targetSelector == null) {
                 log.warning("Error loading wolf behavior selector - cannot fix behavior");
             }
@@ -1135,9 +1136,9 @@ public class AngryWolves extends JavaPlugin {
             } catch (IllegalAccessException ixx) {
             }
             if(sel != null) {
-                sel.a(5, new PathfinderGoalNearestAttackableTarget(ew, EntityHuman.class, 16.0F, 0, true));
+                sel.a(5, new PathfinderGoalNearestAttackableTarget(ew, EntityHuman.class, 0, true));
                 if(hunt_villagers) {
-                    sel.a(6, new PathfinderGoalNearestAttackableTarget(ew, EntityVillager.class, 16.0F, 0, false));
+                    sel.a(6, new PathfinderGoalNearestAttackableTarget(ew, EntityVillager.class, 0, false));
                 }
             }
         }
@@ -1147,7 +1148,7 @@ public class AngryWolves extends JavaPlugin {
     private static class Werewolf {
         Wolf wolf;
         int villager_age;
-        int villager_health;
+        double villager_health;
         Profession villager_profession;
         boolean villager_adult;
     }
