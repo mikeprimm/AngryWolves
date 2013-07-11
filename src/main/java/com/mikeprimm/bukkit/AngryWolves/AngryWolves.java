@@ -4,14 +4,13 @@ import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.logging.Logger;
 
-import net.minecraft.server.v1_6_R1.EntityHuman;
-import net.minecraft.server.v1_6_R1.EntityInsentient;
-import net.minecraft.server.v1_6_R1.EntityLiving;
-import net.minecraft.server.v1_6_R1.EntityVillager;
-import net.minecraft.server.v1_6_R1.EntityWolf;
-import net.minecraft.server.v1_6_R1.PathfinderGoalNearestAttackableTarget;
-import net.minecraft.server.v1_6_R1.PathfinderGoalSelector;
-import org.bukkit.craftbukkit.v1_6_R1.entity.CraftWolf;
+import net.minecraft.server.v1_6_R2.EntityHuman;
+import net.minecraft.server.v1_6_R2.EntityInsentient;
+import net.minecraft.server.v1_6_R2.EntityVillager;
+import net.minecraft.server.v1_6_R2.EntityWolf;
+import net.minecraft.server.v1_6_R2.PathfinderGoalNearestAttackableTarget;
+import net.minecraft.server.v1_6_R2.PathfinderGoalSelector;
+import org.bukkit.craftbukkit.v1_6_R2.entity.CraftWolf;
 
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.MemoryConfiguration;
@@ -768,10 +767,11 @@ public class AngryWolves extends JavaPlugin {
     		areaname = n;
     	}
     	
-    	void loadConfiguration(ConfigurationSection n) {
+    	@SuppressWarnings("unchecked")
+        void loadConfiguration(ConfigurationSection n) {
     		super.loadConfiguration(n);	/* Load base attributes */
     		/* Get coordinate list */
-            List cl = n.getList("coords", null);
+            List<?> cl = n.getList("coords", null);
             if(cl != null) {
             	int len = cl.size();	/* Get number of elements in list */
             	x = new double[len];
@@ -1011,6 +1011,7 @@ public class AngryWolves extends JavaPlugin {
         }
     }
     
+    @SuppressWarnings("unchecked")
     private void readConfig() {
     	File configdir = getDataFolder();	/* Get our data folder */
     	File oldconfig = new File(configdir, "AngryWolves.yml");
@@ -1038,7 +1039,7 @@ public class AngryWolves extends JavaPlugin {
     	if(angrywolf_health < 1) angrywolf_health = 1;
     	
     	/* Now, process world-specific overrides */
-        List w = cfg.getList("worlds");
+        List<?> w = cfg.getList("worlds");
         if(w != null) {
         	for(Object worldobj : w) {
                 ConfigurationSection world = new MemoryConfiguration();
