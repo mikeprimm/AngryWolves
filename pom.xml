@@ -37,20 +37,8 @@
   </build>
      <repositories>
 		<repository>
-			<releases>
-			</releases>
-			<snapshots>
-			</snapshots>
-			<id>bukkit-repo</id>
-			<url>http://repo.bukkit.org/content/repositories/releases/</url>
-		</repository>
-		<repository>
-			<releases>
-			</releases>
-			<snapshots>
-			</snapshots>
-			<id>dynmap-repo</id>
-			<url>http://repo.mikeprimm.com/</url>
+  			<id>bukkit-repo</id>
+  			<url>http://repo.bukkit.org/content/groups/public/</url>
 		</repository>
 	</repositories>
   <dependencies>
