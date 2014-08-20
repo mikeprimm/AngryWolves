@@ -4,13 +4,13 @@ import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.logging.Logger;
 
-import net.minecraft.server.v1_7_R3.EntityHuman;
-import net.minecraft.server.v1_7_R3.EntityInsentient;
-import net.minecraft.server.v1_7_R3.EntityVillager;
-import net.minecraft.server.v1_7_R3.EntityWolf;
-import net.minecraft.server.v1_7_R3.PathfinderGoalNearestAttackableTarget;
-import net.minecraft.server.v1_7_R3.PathfinderGoalSelector;
-import org.bukkit.craftbukkit.v1_7_R3.entity.CraftWolf;
+import net.minecraft.server.v1_7_R4.EntityHuman;
+import net.minecraft.server.v1_7_R4.EntityInsentient;
+import net.minecraft.server.v1_7_R4.EntityVillager;
+import net.minecraft.server.v1_7_R4.EntityWolf;
+import net.minecraft.server.v1_7_R4.PathfinderGoalNearestAttackableTarget;
+import net.minecraft.server.v1_7_R4.PathfinderGoalSelector;
+import org.bukkit.craftbukkit.v1_7_R4.entity.CraftWolf;
 
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.MemoryConfiguration;
