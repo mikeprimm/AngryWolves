@@ -4,13 +4,13 @@ import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.logging.Logger;
 
-import net.minecraft.server.v1_7_R4.EntityHuman;
-import net.minecraft.server.v1_7_R4.EntityInsentient;
-import net.minecraft.server.v1_7_R4.EntityVillager;
-import net.minecraft.server.v1_7_R4.EntityWolf;
-import net.minecraft.server.v1_7_R4.PathfinderGoalNearestAttackableTarget;
-import net.minecraft.server.v1_7_R4.PathfinderGoalSelector;
-import org.bukkit.craftbukkit.v1_7_R4.entity.CraftWolf;
+import net.minecraft.server.v1_8_R1.EntityHuman;
+import net.minecraft.server.v1_8_R1.EntityInsentient;
+import net.minecraft.server.v1_8_R1.EntityVillager;
+import net.minecraft.server.v1_8_R1.EntityWolf;
+import net.minecraft.server.v1_8_R1.PathfinderGoalNearestAttackableTarget;
+import net.minecraft.server.v1_8_R1.PathfinderGoalSelector;
+import org.bukkit.craftbukkit.v1_8_R1.entity.CraftWolf;
 
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.MemoryConfiguration;
@@ -1137,9 +1137,9 @@ public class AngryWolves extends JavaPlugin {
             } catch (IllegalAccessException ixx) {
             }
             if(sel != null) {
-                sel.a(5, new PathfinderGoalNearestAttackableTarget(ew, EntityHuman.class, 0, true));
+                sel.a(5, new PathfinderGoalNearestAttackableTarget(ew, EntityHuman.class, 0, true, true, null));
                 if(hunt_villagers) {
-                    sel.a(6, new PathfinderGoalNearestAttackableTarget(ew, EntityVillager.class, 0, false));
+                    sel.a(6, new PathfinderGoalNearestAttackableTarget(ew, EntityVillager.class, 0, false, true, null));
                 }
             }
         }
