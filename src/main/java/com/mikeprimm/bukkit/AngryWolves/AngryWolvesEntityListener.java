@@ -340,6 +340,7 @@ public class AngryWolvesEntityListener implements Listener {
     		if(plugin.verbose) AngryWolves.log.info("Cancelled target on wolf friend");
     	}
     }
+    @SuppressWarnings("deprecation")
     @EventHandler
     public void onEntityDeath(EntityDeathEvent event) {
         Entity e = event.getEntity();

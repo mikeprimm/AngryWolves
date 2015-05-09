@@ -2,7 +2,6 @@ package com.mikeprimm.bukkit.AngryWolves;
 
 import org.bukkit.Server;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.Plugin;
 
 /**
  * Permissions and GroupManager handling - inspired by BigBrother code

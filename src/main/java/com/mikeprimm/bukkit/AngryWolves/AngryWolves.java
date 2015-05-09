@@ -4,14 +4,14 @@ import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.logging.Logger;
 
-import net.minecraft.server.v1_8_R1.EntityHuman;
-import net.minecraft.server.v1_8_R1.EntityInsentient;
-import net.minecraft.server.v1_8_R1.EntityVillager;
-import net.minecraft.server.v1_8_R1.EntityWolf;
-import net.minecraft.server.v1_8_R1.PathfinderGoalNearestAttackableTarget;
-import net.minecraft.server.v1_8_R1.PathfinderGoalSelector;
-import org.bukkit.craftbukkit.v1_8_R1.entity.CraftWolf;
+import net.minecraft.server.v1_8_R2.EntityHuman;
+import net.minecraft.server.v1_8_R2.EntityInsentient;
+import net.minecraft.server.v1_8_R2.EntityVillager;
+import net.minecraft.server.v1_8_R2.EntityWolf;
+import net.minecraft.server.v1_8_R2.PathfinderGoalNearestAttackableTarget;
+import net.minecraft.server.v1_8_R2.PathfinderGoalSelector;
 
+import org.bukkit.craftbukkit.v1_8_R2.entity.CraftWolf;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.MemoryConfiguration;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -31,6 +31,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.Location;
 import org.bukkit.World;
+
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -1126,6 +1127,7 @@ public class AngryWolves extends JavaPlugin {
     public void setDebugging(final Player player, final boolean value) {
         debugees.put(player, value);
     }
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     public static void setAngry(Wolf wolf, boolean isangry, boolean hunt_villagers) {
         if((targetSelector != null) && (wolf instanceof CraftWolf) && isangry) {
             CraftWolf cw = (CraftWolf)wolf;

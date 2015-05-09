@@ -3,7 +3,6 @@
   <groupId>com.mikeprimm.bukkit</groupId>
   <artifactId>AngryWolves</artifactId>
   <name>AngryWolves</name>
-  <version>1.9.8</version>
 	<properties>
 	   	<timestamp>${maven.build.timestamp}</timestamp>
    		<maven.build.timestamp.format>yyyyMMddHHmm</maven.build.timestamp.format>	
@@ -49,14 +48,15 @@
     <dependency>
 		<groupId>org.bukkit</groupId>
 		<artifactId>bukkit</artifactId>
-		<version>1.8-R0.1-SNAPSHOT</version>
+		<version>1.8.3-R0.1-SNAPSHOT</version>
 		<scope>provided</scope>
     </dependency>
     <dependency>
 	   	<groupId>org.bukkit</groupId>
     	<artifactId>craftbukkit</artifactId>
-    	<version>1.8-R0.1-SNAPSHOT</version>
+    	<version>1.8.3-R0.1-SNAPSHOT</version>
         <scope>provided</scope>
     </dependency>
   </dependencies>
+  <version>2.0</version>
 </project>
