@@ -4,14 +4,13 @@ import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.logging.Logger;
 
-import net.minecraft.server.v1_8_R3.EntityHuman;
-import net.minecraft.server.v1_8_R3.EntityInsentient;
-import net.minecraft.server.v1_8_R3.EntityVillager;
-import net.minecraft.server.v1_8_R3.EntityWolf;
-import net.minecraft.server.v1_8_R3.PathfinderGoalNearestAttackableTarget;
-import net.minecraft.server.v1_8_R3.PathfinderGoalSelector;
+import net.minecraft.server.v1_9_R1.EntityHuman;
+import net.minecraft.server.v1_9_R1.EntityInsentient;
+import net.minecraft.server.v1_9_R1.EntityVillager;
+import net.minecraft.server.v1_9_R1.EntityWolf;
+import net.minecraft.server.v1_9_R1.PathfinderGoalNearestAttackableTarget;
+import net.minecraft.server.v1_9_R1.PathfinderGoalSelector;
 
-import org.bukkit.craftbukkit.v1_8_R3.entity.CraftWolf;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.MemoryConfiguration;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -29,12 +28,15 @@ import org.bukkit.entity.Zombie;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.PluginManager;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -53,6 +55,8 @@ public class AngryWolves extends JavaPlugin {
     private final HashMap<Player, Boolean> debugees = new HashMap<Player, Boolean>();
     public boolean verbose = false;
     private static Field targetSelector;
+    private static Class<?> craftWolf;
+    private static Method cw_getHandle;
     private int poplimit = ANGRYWOLF_POPLIMIT;
     private double hellhound_dmgscale = HELLHOUND_DMGSCALE;
     private int hellhound_health = HELLHOUND_HEALTH;
@@ -977,7 +981,44 @@ public class AngryWolves extends JavaPlugin {
     	/* Since our registered listeners are disabled by default, we don't need to do anything */
     }
 
+    private String obcpackage = null;
+    private String getOBCPackage() {
+        if (obcpackage == null) {
+            obcpackage = Bukkit.getServer().getClass().getPackage().getName();
+        }
+        return obcpackage;
+    }
+
+    private Class<?> getOBCClass(String classname) {
+        String n = classname;
+        String base = "org.bukkit.craftbukkit";
+        int idx = classname.indexOf(base);
+        if(idx >= 0) {
+            n = classname.substring(0, idx) + getOBCPackage() + classname.substring(idx + base.length());
+        }
+        try {
+            return Class.forName(n);
+        } catch (ClassNotFoundException cnfx) {
+            try {
+                return Class.forName(classname);
+            } catch (ClassNotFoundException cnfx2) {
+                return null;
+            }
+        }
+    }
+
     public void onEnable() {
+        craftWolf = getOBCClass("org.bukkit.craftbukkit.entity.CraftWolf");
+        if (craftWolf == null) {
+            log.warning("Error loading CraftWolf - cannot fix behavior");
+        }
+        else {
+            try {
+                cw_getHandle = craftWolf.getDeclaredMethod("getHandle", new Class[0]);
+            } catch (NoSuchMethodException e) {
+            } catch (SecurityException e) {
+            }
+        }
         try {
             targetSelector = EntityInsentient.class.getDeclaredField("targetSelector");
             if(targetSelector == null) {
@@ -986,6 +1027,7 @@ public class AngryWolves extends JavaPlugin {
             else {
                 targetSelector.setAccessible(true);
             }
+
         } catch (NoSuchFieldException nsfx) {
             log.warning("Error finding wolf behavior selector - cannot fix behavior");
         }
@@ -1129,19 +1171,26 @@ public class AngryWolves extends JavaPlugin {
     }
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public static void setAngry(Wolf wolf, boolean isangry, boolean hunt_villagers) {
-        if((targetSelector != null) && (wolf instanceof CraftWolf) && isangry) {
-            CraftWolf cw = (CraftWolf)wolf;
-            EntityWolf ew = cw.getHandle();
+        if((targetSelector != null) && (craftWolf != null) && (cw_getHandle != null) && (craftWolf.isAssignableFrom(wolf.getClass())) && isangry) {
+            Object ew = null;
+            try {
+                ew = cw_getHandle.invoke(wolf, new Object[0]);
+            } catch (IllegalAccessException e) {
+            } catch (IllegalArgumentException e) {
+            } catch (InvocationTargetException e) {
+            }
             PathfinderGoalSelector sel = null;
             try {
-                sel = (PathfinderGoalSelector)targetSelector.get(ew);
+                if (ew != null) {
+                    sel = (PathfinderGoalSelector)targetSelector.get(ew);
+                }
             } catch (IllegalArgumentException iax) {
             } catch (IllegalAccessException ixx) {
             }
             if(sel != null) {
-                sel.a(5, new PathfinderGoalNearestAttackableTarget(ew, EntityHuman.class, 0, true, true, null));
+                sel.a(5, new PathfinderGoalNearestAttackableTarget((EntityWolf)ew, EntityHuman.class, 0, true, true, null));
                 if(hunt_villagers) {
-                    sel.a(6, new PathfinderGoalNearestAttackableTarget(ew, EntityVillager.class, 0, false, true, null));
+                    sel.a(6, new PathfinderGoalNearestAttackableTarget((EntityWolf)ew, EntityVillager.class, 0, false, true, null));
                 }
             }
         }
