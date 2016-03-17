@@ -215,7 +215,7 @@ public class AngryWolvesEntityListener implements Listener {
 					}
 				}
   			}
-            loc.getWorld().playSound(loc, Sound.ENTITY_WOLF_HOWL, 1.0F, 1.0F);
+			AngryWolves.playHowl(loc);
             if(plugin.verbose) AngryWolves.log.info("Make howl sound");
     	}
     }

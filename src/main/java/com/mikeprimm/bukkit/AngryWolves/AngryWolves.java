@@ -4,13 +4,6 @@ import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.logging.Logger;
 
-import net.minecraft.server.v1_9_R1.EntityHuman;
-import net.minecraft.server.v1_9_R1.EntityInsentient;
-import net.minecraft.server.v1_9_R1.EntityVillager;
-import net.minecraft.server.v1_9_R1.EntityWolf;
-import net.minecraft.server.v1_9_R1.PathfinderGoalNearestAttackableTarget;
-import net.minecraft.server.v1_9_R1.PathfinderGoalSelector;
-
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.MemoryConfiguration;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -30,10 +23,13 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Server;
+import org.bukkit.Sound;
 import org.bukkit.World;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -56,7 +52,16 @@ public class AngryWolves extends JavaPlugin {
     public boolean verbose = false;
     private static Field targetSelector;
     private static Class<?> craftWolf;
+    private static Class<?> entityHuman;
+    private static Class<?> entityInsentient;
+    private static Class<?> entityVillager;
+    private static Class<?> pathfinderGoalSelector;
+    private static Class<?> pathfinderGoal;
+    private static Class<?> pathfinderGoalNearestAttackableTarget;
     private static Method cw_getHandle;
+    private static Method pgs_setGoal;
+    private static Constructor<?> pgnat_const;
+    private static Sound wolf_howl;
     private int poplimit = ANGRYWOLF_POPLIMIT;
     private double hellhound_dmgscale = HELLHOUND_DMGSCALE;
     private int hellhound_health = HELLHOUND_HEALTH;
@@ -989,12 +994,45 @@ public class AngryWolves extends JavaPlugin {
         return obcpackage;
     }
 
+    private String nmspackage = null;
+    private String getNMSPackage() {
+        if (nmspackage == null) {
+            Server srv = Bukkit.getServer();
+            /* Get getHandle() method */
+            try {
+                Method m = srv.getClass().getMethod("getHandle");
+                Object scm = m.invoke(srv); /* And use it to get SCM (nms object) */
+                nmspackage = scm.getClass().getPackage().getName();
+            } catch (Exception x) {
+            }
+        }
+        return nmspackage;
+    }
+
     private Class<?> getOBCClass(String classname) {
         String n = classname;
         String base = "org.bukkit.craftbukkit";
         int idx = classname.indexOf(base);
         if(idx >= 0) {
             n = classname.substring(0, idx) + getOBCPackage() + classname.substring(idx + base.length());
+        }
+        try {
+            return Class.forName(n);
+        } catch (ClassNotFoundException cnfx) {
+            try {
+                return Class.forName(classname);
+            } catch (ClassNotFoundException cnfx2) {
+                return null;
+            }
+        }
+    }
+
+    private Class<?> getNMSClass(String classname) {
+        String n = classname;
+        String base = "net.minecraft.server";
+        int idx = classname.indexOf(base);
+        if(idx >= 0) {
+            n = classname.substring(0, idx) + getNMSPackage() + classname.substring(idx + base.length());
         }
         try {
             return Class.forName(n);
@@ -1019,8 +1057,49 @@ public class AngryWolves extends JavaPlugin {
             } catch (SecurityException e) {
             }
         }
+        entityHuman = getNMSClass("net.minecraft.server.EntityHuman");
+        if (entityHuman == null) {
+            log.warning("Error loading EntityHuman - cannot fix behavior");
+        }
+        entityInsentient = getNMSClass("net.minecraft.server.EntityInsentient");
+        if (entityInsentient == null) {
+            log.warning("Error loading EntityInsentient - cannot fix behavior");
+        }
+        entityVillager = getNMSClass("net.minecraft.server.EntityVillager");
+        if (entityVillager == null) {
+            log.warning("Error loading EntityVillager - cannot fix behavior");
+        }
+        pathfinderGoal = getNMSClass("net.minecraft.server.PathfinderGoal");
+        if (pathfinderGoal == null) {
+            log.warning("Error loading PathfinderGoal - cannot fix behavior");
+        }
+        pathfinderGoalSelector = getNMSClass("net.minecraft.server.PathfinderGoalSelector");
+        if (pathfinderGoalSelector == null) {
+            log.warning("Error loading PathfinderGoalSelector - cannot fix behavior");
+        }
+        else {
+            try {
+                pgs_setGoal = pathfinderGoalSelector.getDeclaredMethod("a", new Class[] { int.class, pathfinderGoal });
+            } catch (NoSuchMethodException e) {
+            } catch (SecurityException e) {
+            }
+        }
+        pathfinderGoalNearestAttackableTarget = getNMSClass("net.minecraft.server.PathfinderGoalNearestAttackableTarget");
+        if (pathfinderGoalNearestAttackableTarget == null) {
+            log.warning("Error loading PathfinderGoalNearestAttackableTarget - cannot fix behavior");
+        }
+        else {
+            Constructor<?>[] c = pathfinderGoalNearestAttackableTarget.getConstructors();
+            for (int i = 0; i < c.length; i++) {
+                if (c[i].getParameterTypes().length == 6) {
+                    pgnat_const = c[i];
+                }
+            }
+        }
+        
+        
         try {
-            targetSelector = EntityInsentient.class.getDeclaredField("targetSelector");
+            targetSelector = entityInsentient.getDeclaredField("targetSelector");
             if(targetSelector == null) {
                 log.warning("Error loading wolf behavior selector - cannot fix behavior");
             }
@@ -1030,6 +1109,11 @@ public class AngryWolves extends JavaPlugin {
 
         } catch (NoSuchFieldException nsfx) {
             log.warning("Error finding wolf behavior selector - cannot fix behavior");
+        }
+        // Find wolf howl sound
+        for (Sound vv : Sound.values()) {
+            if (vv.name().contains("WOLF_HOWL"))
+                wolf_howl = vv;
         }
         
     	/* Initialize our permissions */
@@ -1179,18 +1263,26 @@ public class AngryWolves extends JavaPlugin {
             } catch (IllegalArgumentException e) {
             } catch (InvocationTargetException e) {
             }
-            PathfinderGoalSelector sel = null;
+            Object sel = null;
             try {
                 if (ew != null) {
-                    sel = (PathfinderGoalSelector)targetSelector.get(ew);
+                    sel = targetSelector.get(ew);
                 }
             } catch (IllegalArgumentException iax) {
             } catch (IllegalAccessException ixx) {
             }
             if(sel != null) {
-                sel.a(5, new PathfinderGoalNearestAttackableTarget((EntityWolf)ew, EntityHuman.class, 0, true, true, null));
-                if(hunt_villagers) {
-                    sel.a(6, new PathfinderGoalNearestAttackableTarget((EntityWolf)ew, EntityVillager.class, 0, false, true, null));
+                try {
+                    Object g = pgnat_const.newInstance(ew, entityHuman, 0, true, true, null);
+                    pgs_setGoal.invoke(sel, 5, g);
+                    if(hunt_villagers) {
+                        g = pgnat_const.newInstance(ew, entityVillager, 0, false, true, null);
+                        pgs_setGoal.invoke(sel, 6, g);
+                    }
+                } catch (IllegalAccessException e) {
+                } catch (IllegalArgumentException e) {
+                } catch (InvocationTargetException e) {
+                } catch (InstantiationException e) {
                 }
             }
         }
@@ -1249,5 +1341,9 @@ public class AngryWolves extends JavaPlugin {
                 iter.remove();
             }
         }
+    }
+    public static void playHowl(Location loc) {
+        if (wolf_howl != null)
+            loc.getWorld().playSound(loc, wolf_howl, 1.0F, 1.0F);
     }
 }
