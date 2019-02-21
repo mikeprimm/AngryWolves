@@ -123,14 +123,14 @@ public class AngryWolvesEntityListener implements Listener {
         		Block b = loc.getBlock();
         		Biome bio = b.getBiome();
         		/* See if hellhound - only hellhounds substitute in Nether, use hellhound_rate elsewhere */
-        		boolean do_hellhound = angry && ((bio.equals(Biome.HELL) || (rnd.nextInt(100) <= cfg.getHellhoundRate())));
+        		boolean do_hellhound = angry && ((bio.equals(Biome.NETHER) || (rnd.nextInt(100) <= cfg.getHellhoundRate())));
 
                 if(plugin.verbose) AngryWolves.log.info("biome=" + bio + ", ignore=" + ignore_terrain + ", angry=" + angry + ", hellhound=" + do_hellhound);
         		/* If valid biome for wolf (or hellhound) */
         		if(ignore_terrain || (bio == Biome.FOREST) || (bio == Biome.TAIGA) ||
-        				(bio == Biome.HELL) || (bio == Biome.FOREST_HILLS) || (bio == Biome.TAIGA_HILLS)) {
+        				(bio == Biome.NETHER) || (bio == Biome.WOODED_HILLS) || (bio == Biome.TAIGA_HILLS)) {
     				/* If hellhound in hell, we're good */
-    				if(bio.equals(Biome.HELL)) {
+    				if(bio.equals(Biome.NETHER)) {
     				    if(!do_hellhound)   /* Only angry hellhounds in nether */
     				        return;
     				}
@@ -407,7 +407,7 @@ public class AngryWolvesEntityListener implements Listener {
                 int id = loot.get(rnd.nextInt(sz));
                 List<ItemStack> drop = event.getDrops();
                 if(drop != null) {
-                    drop.add(new ItemStack(id, 1));
+                    drop.add(new ItemStack(Material.GOLDEN_APPLE , 1));
                 }
             }
         }

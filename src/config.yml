@@ -1,0 +1,94 @@
+# Configuration file for AngryWolves);
+#   spawn-anger-rate is percentage of normal wolf spawns that spawn angry
+# If undefined, spawn-anger-rate defaults to 0
+spawn-anger-rate: 5
+#   hellhound-rate is percentage of angry wolfs that are hellhounds (flaming-fireproof-wolves)
+# If undefined, hellhound-rate defaults to 10.  In Nether, 100% of angry wolves are hellhounds.
+hellhound-rate: 10
+#   mob-to-wolf-rate is the TENTHS of a percent of monster spawns that are replaced with angry wolves
+#   spider-to-wolf-rate is the TENTHS of a percent of spider spawns that are replaced with angry wolves
+#   zombie-to-wolf-rate is the TENTHS of a percent of zombie spawns that are replaced with angry wolves
+#   skeleton-to-wolf-rate is the TENTHS of a percent of skeleton spawns that are replaced with angry wolves
+#   creeper-to-wolf-rate is the TENTHS of a percent of creeper spawns that are replaced with angry wolves
+#   pig-zombie-to-wolf-rate is the TENTHS of a percent of pig-zombie spawns that are replaced with angry wolves
+#   note: if monster type specific rate is defined, it supercedes the mob-to-wolf-rate for that monster type
+# If undefined, mob-to-wolf-rate defaults to 10, others are null
+mob-to-wolf-rate: 10
+# spider-to-wolf-rate: 20
+# zombie-to-wolf-rate: 0
+# skeleton-to-wolf-rate: 5
+# creeper-to-wolf-rate: 1000
+# pigzombie-to-wolf-rate: 20
+# mob-to-spawn-based spawns are normally limited to spawns occuring in valid biomes for wolves, as well as over valid wolf spawn terrain (grass)
+# mobtowolf-ignore-terrain can be set to 'true' to disable biome and terrain restrictions
+# mobtowolf-ignore-terrain: true
+# (Optional) Make non-angry (wild) wolf spawns from mob spawns, at given rate (in TENTHS of a percent) - make wolves more common
+mob-to-wildwolf-rate: 10
+# (Optional) Spawn wolf pup when wolf kills sheep (rate in percent)
+# pup-on-sheep-kill-rate: 10
+# If defined, can also have a 'full moon night' one out of every days-per-moon (if 8, will match 1.0.0+ moon phases)
+# During this, anger-rate-fullmoon percent of non-tame wolves go angry
+# At the end of the full moon, fullmoon-stay-angry-rate percent of angry wolves stay angry
+days-between-fullmoons: 8
+anger-rate-fullmoon: 25
+fullmoonmsg: "&4The wolves are baying at the full moon ..."
+fullmoon-stay-angry-rate: 0
+# Optional - mob-to-wolf-rate to apply during full moon (if set - otherwise, same rate used)
+# fullmoon-mob-to-wolf-rate: 50
+# Optional spawn message
+# spawnmsg: There's a bad moon on the rise...
+# Also, optional spawn message radius - limits message to only players within given number of blocks of spawn
+# spawnmsgradius: 50
+# Wolf-in-sheeps-clothing rate : in 10ths of a percent
+wolf-in-sheep-rate: 0
+wolf-in-sheep-msg: "Oh, no! A wolf in sheep's clothing!"
+# Optional - enable 'wolf-friends' : players with the 'angrywolves.wolf-friend' privilege will not be targetted by angry wolves!
+# wolf-friends: true
+# Optional - enable wolf loot - wolf-loot-rate is percent change of drop, wolf-loot is list of item ids to select from (1 randomly picked), wolf-xp is experience orbs dropped
+# wolf-loot-rate: 20
+# wolf-loot: [ 334, 352, 319 ]
+# wolf-xp: 5
+# Optional - enable different loot for angry wolves (if not defined, wolf loot settings are used)
+# angry-wolf-loot-rate: 70
+# angry-wolf-loot: [ 334, 352, 319 ]
+# angry-wolf-xp: 5
+# Optional - enable different loot for hellhounds (if not defined, wolf loot settings are used)
+# hellhound-loot-rate: 90
+# hellhound-loot: [ 334, 352, 319 ]
+# hellhound-xp: 10
+# Population limit for Angry Wolves and Hellhounds (combined for server)
+angrywolf-pop-limit: 200
+# Angry Wolf initial health - normal wild wolves are 8, tamed wolves are 20
+angrywolf-health: 8
+# Hellhound initial health - normal wild wolves are 8, tamed wolves are 20
+hellhound-health: 10
+# Hellhound damage scale - multiplier for general damage to hellhounds (less that 1.0 reduces damage done to them)
+hellhound-damagescale: 0.5
+# (optional) have hellhounds shoot fireballs!  Control range, rate (seconds between shots), and whether they cause fires
+# hellhound-fireball-range: 10
+# hellhound-fireball-rate: 3
+#hellhound-fireball-incendiary: false
+
+# Rate of villagers becoming angry wolves during full moon (AKA werewolves) (percent)
+villager-werewolf-rate: 0.0
+# If true, angry wolves/hellhounds will hunt villagers
+angrywolf-hunts-villagers: false
+
+# For multi-world specific rates, fill in rate under section for each world
+worlds:
+  - name: transylvania
+    spawn-anger-rate: 90
+    mob-to-wolf-rate: 100
+    spawnmsg: Something evil has entered the world...
+# Optional - for special settings limited to an area on one world
+#  'coords' define the area, as a list of two or more coordinate values (each of which has an x and z attribute).
+areas:
+  - name: ExampleArea
+    worldname: transylvania
+    coords:
+      - x: 200
+        z: 40
+      - x: 60
+        z: 100
+    spawn-anger-rate: 100
+    mob-to-wolf-rate: 100

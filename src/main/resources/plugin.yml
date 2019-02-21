@@ -1,9 +1,13 @@
 name: AngryWolves
 main: com.mikeprimm.bukkit.AngryWolves.AngryWolves
 version: "${project.version}-${BUILD_NUMBER}"
-author: mikeprimm
+authors: [MikePrimm, CindyKer, AeSix]
+description: Make wolves moar wolffy and warewolves and hellhounds
+website: https://github.com/AeSix/AngryWolves
+api-version: 1.13
 
 permissions:
   angrywolves.wolf-friend:
     description: Will not be attacked by Angry Wolves
     default: op
+

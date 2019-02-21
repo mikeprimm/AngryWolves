@@ -1,0 +1,8 @@
+name: AngryWolves
+version: ${project.version}
+authors: [MikePrimm, CindyKer, AeSix]
+description: Make wolves moar wolffy and warewolves and hellhounds
+website: https://github.com/AeSix/AngryWolves
+api-version: 1.13
+
+main: com.mikeprimm.bukkit.AngryWolves
