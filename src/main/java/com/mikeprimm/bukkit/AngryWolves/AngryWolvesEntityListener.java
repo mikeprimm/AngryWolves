@@ -407,7 +407,7 @@ public class AngryWolvesEntityListener implements Listener {
                 int id = loot.get(rnd.nextInt(sz));
                 List<ItemStack> drop = event.getDrops();
                 if(drop != null) {
-                    drop.add(new ItemStack(id, 1));
+                    drop.add(new ItemStack(Material.GOLDEN_APPLE , 1));
                 }
             }
         }
